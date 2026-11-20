@@ -1,6 +1,6 @@
 // What a threat block shows: a bar with a list of the three diagrams (then the C4 level list or the scenario list,
-// and the Threats and Compact switches) and, last, the Report button, then the chosen diagram, the table of the threats it
-// shows (threat-table.js) and its key (legend.js). Diagrams are Mermaid, drawn by Obsidian's own Markdown renderer.
+// and the Threats and Compact switches) and, last, the Report button, then the chosen diagram, its threat register (the threats it
+// shows: threat-table.js) and its key (legend.js). Diagrams are Mermaid, drawn by Obsidian's own Markdown renderer.
 // The report is never shown in the block: its button saves it as a note and opens that in a new tab (report-note.js).
 // Used for "threat" code blocks and, inside TmFileView, for .threat files.
 
@@ -65,8 +65,9 @@ class TmBlock extends MarkdownRenderChild {
   text() {
     const { view, level, scenario, overlay, compact } = this.state;
     if (view === 'sequence') return tmSequence(this.model, scenario, { compact });
-    if (view === 'dataflow') return tmDataflow(this.model, { compact });
-    return tmStructure(this.model, tmLevelFor(this.model, level), { overlay, compact });
+    const defaultIcons = this.plugin.settings.defaultIcons;
+    if (view === 'dataflow') return tmDataflow(this.model, { compact, defaultIcons });
+    return tmStructure(this.model, tmLevelFor(this.model, level), { overlay, compact, defaultIcons });
   }
 
   draw() {
@@ -93,7 +94,7 @@ class TmBlock extends MarkdownRenderChild {
     MarkdownRenderer.render(this.plugin.app, markdown, body, this.sourcePath, inner);
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
     tmFindingsInto(this.findings, this.model.findings);
-    tmLegendInto(this.legend, this.model, view, overlay);
+    tmLegendInto(this.legend, this.model, view, overlay, this.plugin.settings.defaultIcons !== false);
   }
 
   /**
@@ -126,7 +127,7 @@ class TmBlock extends MarkdownRenderChild {
       b.addEventListener('click', () => this.choose({ [key]: !this.state[key] }));
     };
     if (this.state.view === 'structure' && this.model.threats.length) toggle('Threats', 'overlay', 'Show the threats on the boxes and arrows');
-    toggle('Compact', 'compact', 'Short labels: no descriptions or data, the detail in the table below');
+    toggle('Compact', 'compact', 'Short labels: no descriptions or data, the detail in the threat register below');
   }
 
 

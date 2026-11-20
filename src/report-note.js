@@ -26,8 +26,8 @@ function tmReportBase(model, sourcePath) {
 function tmReportDiagrams(model, settings) {
   const level = tmLevelFor(model, model.level || settings.defaultLevel);
   const out = [
-    { title: `Structure (${TM_LEVEL_NAMES[level] || level} level)`, mermaid: tmStructure(model, level, { portable: true }), threats: tmViewThreats(model, 'structure') },
-    { title: 'Data flow', mermaid: tmDataflow(model, { portable: true }), threats: tmViewThreats(model, 'dataflow') },
+    { title: `Structure (${TM_LEVEL_NAMES[level] || level} level)`, mermaid: tmStructure(model, level, { portable: true, defaultIcons: settings.defaultIcons }), threats: tmViewThreats(model, 'structure') },
+    { title: 'Data flow', mermaid: tmDataflow(model, { portable: true, defaultIcons: settings.defaultIcons }), threats: tmViewThreats(model, 'dataflow') },
   ];
   const seq = (id, title) => out.push({ title, mermaid: tmSequence(model, id), threats: tmViewThreats(model, 'sequence', { scenario: id }) });
   if (model.scenarios.length) for (const s of model.scenarios) seq(s.id, `Sequence: ${s.title}`);

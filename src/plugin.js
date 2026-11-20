@@ -5,6 +5,7 @@ const TM_DEFAULTS = {
   defaultView: 'structure', // structure | sequence | dataflow
   defaultLevel: 'container', // context | container | component
   showWarnings: true,
+  defaultIcons: true, // a person, store or queue without an icon of its own gets its kind's (icons.js)
   reportLocation: 'reports', // reports (a Reports folder beside the note with the model) | folder (reportFolder)
   reportFolder: '',
   reportDiagrams: true, // put the diagrams in saved reports

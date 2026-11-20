@@ -1,4 +1,6 @@
 // A .threat file: open it to see the model; the pencil button at the top shows the text to edit.
+// in vs code, add the plantuml extension and associate .threat with that for syntax highlighting of a sort
+
 title = "Online shop"
 description = `An online shop with a payment provider. Open the Structure view at the
 Component level to see inside the Orders service.`

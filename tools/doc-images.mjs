@@ -77,6 +77,24 @@ function drawIcons(svg) {
   });
 }
 
+/** The icon after the title of a zone that asks for one; the title's width is estimated, as nothing lays it out here. */
+function drawZoneIcons(svg) {
+  return svg.replace(/(<g class="pele-cluster[^"]*\btmIcon_([a-z0-9_]+)[^"]*"[^>]*>)([\s\S]*?<text class="pele-cluster-label"[^>]*x="([-\d.]+)" y="([-\d.]+)"[^>]*>([^<]*)<\/text>)/g, (all, open, name, inner, x, y, title) => {
+    const file = lucideDir && path.join(lucideDir, `${name.replace(/_/g, '-')}.svg`);
+    if (!file || !fs.existsSync(file)) return all;
+    const size = 16;
+    const words = title.replace(/[\u2003\u200b]/g, '');
+    const width = words.length * 7.2 + 2 * 14; // the title, and the two em spaces left for the icon
+    const left = Number(x) + width / 2 - size - 2;
+    const top = Number(y) - size + 3;
+    const icon = fs
+      .readFileSync(file, 'utf8')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<svg\b[^>]*>/, `<svg x="${left}" y="${top}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">`);
+    return `${open}${inner}<g class="tm-icon">${icon.trim()}</g>`;
+  });
+}
+
 const VIEWS = ['structure-context', 'structure-container', 'structure-component', 'dataflow', 'sequence'];
 
 function mermaidFor(model, view) {
@@ -98,7 +116,7 @@ for (const ex of examplesWithImages(fs.readFileSync('docs/language.md', 'utf8'))
     }
     const { svg } = pele.render(mermaidFor(model, view));
     // a white background, so the picture reads on a dark page too
-    const out = drawIcons(colourIds(colourStride(svg.replace(/(<svg\b[^>]*>)/, '$1<rect width="100%" height="100%" fill="#ffffff"/>')), model));
+    const out = drawZoneIcons(drawIcons(colourIds(colourStride(svg.replace(/(<svg\b[^>]*>)/, '$1<rect width="100%" height="100%" fill="#ffffff"/>')), model)));
     fs.mkdirSync('docs/images', { recursive: true });
     fs.writeFileSync(`docs/${img}`, out);
     made++;

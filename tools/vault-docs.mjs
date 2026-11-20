@@ -4,6 +4,7 @@
 // - a note at the top says where the text comes from (edit the original, not the copy)
 // - links to other repository files become links to the guide notes, or to the file on GitHub
 // - links to a heading ("#hashtags") point at the heading by its text, as Obsidian expects (no "|", so tables survive)
+// - the README's screenshots are left out (between <!-- screenshots … --> and <!-- /screenshots -->): the vault has the real thing
 // - each ```threat example that has a picture (images/language-*.svg, made by tools/doc-images.mjs, for GitHub) is
 //   shown as its text (```threat-source) and then drawn live by the plugin (```threat); the picture is left out. Fragments are written as
 //   ```threat-source in the original, so they show as highlighted text rather than as errors.
@@ -38,6 +39,11 @@ export function examplesWithImages(text) {
   return out;
 }
 
+/** The text without its screenshots section (<!-- screenshots … --> to <!-- /screenshots -->). */
+export function withoutScreenshots(text) {
+  return text.replace(/^<!-- screenshots\b[\s\S]*?<!-- \/screenshots -->\n+/m, '');
+}
+
 /** "[text](#some-heading)" → "[text](#Some%20heading)", using the note's own headings. */
 export function headingLinks(text) {
   const slug = (h) => h.toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/ +/g, '-');
@@ -63,7 +69,7 @@ export function vaultDocs() {
     path: `${GUIDE}/${note}.md`,
     text:
       `> [!info] Copied from \`${file}\` in the plugin's repository when the plugin is built. Edit that file, not this note.\n\n` +
-      repoLinks(headingLinks(liveExamples(fs.readFileSync(file, 'utf8'))), base),
+      repoLinks(headingLinks(liveExamples(withoutScreenshots(fs.readFileSync(file, 'utf8')))), base),
   }));
 }
 

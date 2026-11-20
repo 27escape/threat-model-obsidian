@@ -10,8 +10,9 @@ const TM_KEY_KINDS = [
   ['external', 'External system'],
 ];
 
-/** Fill el with the key for this view. overlay: whether the Structure view shows threats. */
-function tmLegendInto(el, model, view, overlay) {
+/** Fill el with the key for this view. overlay: whether the Structure view shows threats; marks: whether the Data flow
+ *  view marks untrusted zones and sensitive data (the Default icons setting). */
+function tmLegendInto(el, model, view, overlay, marks = true) {
   el.empty();
   if (view === 'structure') {
     const used = new Set(model.elements.map((e) => (e.kind === 'queue' ? 'store' : e.kind)));
@@ -19,9 +20,19 @@ function tmLegendInto(el, model, view, overlay) {
     for (const [kind, name] of TM_KEY_KINDS) if (used.has(kind)) kinds.createSpan({ cls: `tm-legend-item tm-key-chip tm-key-${kind}`, text: name });
     kinds.createSpan({ cls: 'tm-legend-item tm-key-chip tm-key-box', text: 'Inside a system or container' });
   }
-  if (view !== 'sequence' && model.flows.some((f) => f.encrypted === false)) {
-    const plain = el.createDiv({ cls: 'tm-legend-row' });
-    plain.createSpan({ cls: 'tm-legend-item tm-legend-dashed', text: 'Dashed arrows: not encrypted' });
+  const plainFlows = view !== 'sequence' && model.flows.some((f) => f.encrypted === false);
+  const untrusted = marks && view === 'dataflow' && model.zones.some((z) => /untrusted/i.test(z.trust || ''));
+  const sensitive = marks && view === 'dataflow' && model.flows.some((f) => f.sensitive);
+  if (plainFlows || untrusted || sensitive) {
+    const row = el.createDiv({ cls: 'tm-legend-row' });
+    if (plainFlows) row.createSpan({ cls: 'tm-legend-item tm-legend-dashed', text: 'Dashed arrows: not encrypted' });
+    if (untrusted) {
+      const item = row.createSpan({ cls: 'tm-legend-item tm-legend-icon' });
+      const icon = tmLucide(TM_UNTRUSTED_ICON);
+      if (icon) item.appendChild(icon);
+      item.appendText(' Untrusted zone');
+    }
+    if (sensitive) row.createSpan({ cls: 'tm-legend-item', text: `${TM_SENSITIVE_MARK} Sensitive data` });
   }
   const showThreats = model.threats.length && (view !== 'structure' || overlay);
   if (!showThreats) return;
@@ -32,7 +43,7 @@ function tmLegendInto(el, model, view, overlay) {
     item.appendText(` ${TM_STRIDE_NAMES[l].toLowerCase()}`);
   }
   const risk = el.createDiv({ cls: 'tm-legend-row' });
-  risk.createSpan({ cls: 'tm-legend-label', text: view === 'sequence' ? 'Open threats:' : 'Threat IDs (as in the table), by open risk:' });
+  risk.createSpan({ cls: 'tm-legend-label', text: view === 'sequence' ? 'Open threats:' : 'Threat IDs (as in the threat register), by open risk:' });
   for (const r of [...TM_RISKS].reverse()) risk.createSpan({ cls: `tm-legend-item tm-risk-${r}`, text: r === 'critical' && view === 'sequence' ? 'CRITICAL' : tmCap(r) });
   if (model.threats.some((t) => t.status !== 'open')) {
     const closed = el.createDiv({ cls: 'tm-legend-row' });

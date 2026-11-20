@@ -75,7 +75,7 @@ test('Structure view: levels show more inside each box, and flows move to the ne
   assert.match(ctx, new RegExp(`${ids.get('app')} -->\\|"Check"\\| ${ids.get('idp')}`));
   assert.doesNotMatch(ctx, /POST/);
 
-  const cont = tmStructure(m, 'container');
+  const cont = tmStructure(m, 'container', { defaultIcons: false });
   assert.match(cont, new RegExp(`subgraph ${ids.get('app')} `));
   assert.match(cont, /Container: React/);
   assert.match(cont, /POST \[HTTPS\]/);
@@ -93,7 +93,7 @@ test('Structure view: levels show more inside each box, and flows move to the ne
 
 test('Data flow view: zones as boxes, numbered flows with data and STRIDE, coloured by risk', () => {
   const m = model(PORTAL);
-  const d = tmDataflow(m);
+  const d = tmDataflow(m, { defaultIcons: false });
   assert.match(d, /subgraph z1 \["Internet \(untrusted\)"\]/);
   assert.match(d, /\(1\) Types#59; then #35;submits<br\/>Password #35;secret/);
   assert.match(d, /\(2\) POST<br\/>🆂 <b><i><u>T1 \(5×4\)<\/u><\/i><\/b>"/);
@@ -366,4 +366,77 @@ test('threat IDs on the diagram carry the rating: likelihood × impact, or a CVS
     }
   `);
   assert.equal(tmThreatIdsText(m.elements[0].threats), '<b><i><u>V1 (9.8)</u></i></b> <b><u>G1 (4×3)</u></b> <i>N1</i>');
+});
+
+test('default icons: a person, external, store or queue without an icon gets its kind\'s; icon = "none" or the setting leaves it off', () => {
+  const { model: m, errors, warnings } = tmBuildModel(`
+    person user "User" { icon_colour = "teal" }
+    person bot "Bot" { icon = "none" }
+    person admin "Admin" { icon = "shield" }
+    store db "DB"
+    queue q "Jobs"
+    container api "API"
+    external idp "IdP"
+  `);
+  assert.deepEqual(errors, []);
+  const icon = (id) => m.elements.find((e) => e.id === id).icon;
+  assert.deepEqual(icon('user'), { name: 'user', fg: 'teal', bg: null, isDefault: true });
+  assert.equal(icon('bot'), null);
+  assert.deepEqual(icon('admin'), { name: 'shield', fg: null, bg: null });
+  assert.equal(icon('db').name, 'database');
+  assert.equal(icon('q').name, 'list-ordered');
+  assert.equal(icon('api'), null);
+  assert.equal(icon('idp').name, 'building-2');
+  assert.deepEqual(warnings, []);
+
+  const on = tmStructure(m, 'container');
+  assert.match(on, /class e\d+ tmIcon_list_ordered/);
+  assert.match(on, /class e\d+ tmIcon_shield/);
+  const off = tmStructure(m, 'container', { defaultIcons: false });
+  assert.doesNotMatch(off, /tmIcon_user|tmIcon_database|tmIcon_list_ordered/);
+  assert.match(off, /class e\d+ tmIcon_shield/); // an icon the model names is always drawn
+  assert.doesNotMatch(tmDataflow(m, { defaultIcons: false }), /tmIcon_database/);
+  assert.match(tmDataflow(m), /tmIcon_database/);
+});
+
+test('default icons from the technology, the untrusted-zone shield and the padlock on sensitive data', () => {
+  const { tmTechIcon } = load(['tmTechIcon']);
+  assert.equal(tmTechIcon('React, TypeScript'), 'globe');
+  assert.equal(tmTechIcon('React Native'), 'smartphone');
+  assert.equal(tmTechIcon('Node.js'), 'server');
+  assert.equal(tmTechIcon('ASP.NET Core'), 'server');
+  assert.equal(tmTechIcon('PostgreSQL 15'), 'database');
+  assert.equal(tmTechIcon('Amazon SQS'), 'list-ordered');
+  assert.equal(tmTechIcon('Azure Blob Storage'), 'archive');
+  assert.equal(tmTechIcon('SMTP relay'), 'mail');
+  assert.equal(tmTechIcon('Entra ID'), 'key-round');
+  assert.equal(tmTechIcon('JavaScript'), 'globe'); // not "java"
+  assert.equal(tmTechIcon('Google Cloud'), null); // not "go"
+  assert.equal(tmTechIcon(''), null);
+
+  const { model: m, errors } = tmBuildModel(`
+    zone net "Internet" { trust = "untrusted" }
+    zone dc "Data centre" { trust = "trusted" }
+    person user "User" { zone = net  technology = "Web browser" }
+    container web "Web" { zone = dc  technology = "React" }
+    container odd "Odd" { zone = dc  technology = "COBOL" }
+    store files "Files" { zone = dc  technology = "S3" }
+    external idp "IdP" { technology = "Auth0" }
+    user -> web "Signs in" { data = ["Password #secret", "Name"] }
+    web -> files "Saves"
+  `);
+  assert.deepEqual(errors, []);
+  const icon = (id) => m.elements.find((e) => e.id === id).icon;
+  assert.equal(icon('user').name, 'user'); // a person is always "user"
+  assert.equal(icon('web').name, 'globe');
+  assert.equal(icon('odd'), null);
+  assert.equal(icon('files').name, 'archive');
+  assert.equal(icon('idp').name, 'key-round');
+
+  const d = tmDataflow(m);
+  assert.match(d, /classDef tmIcon_shield_alert opacity:1/);
+  assert.equal((d.match(/class z\d+ tmIcon_shield_alert/g) || []).length, 1);
+  assert.match(d, /\u{1F512} Password #35;secret, Name/u);
+  const off = tmDataflow(m, { defaultIcons: false });
+  assert.doesNotMatch(off, /shield_alert|\u{1F512}|tmIcon_/u);
 });

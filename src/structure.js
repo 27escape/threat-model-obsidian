@@ -109,7 +109,7 @@ function tmStructure(model, level, opts = {}) {
 
   const classes = portable ? TM_C4_CLASSES : TM_C4_CLASS_NAMES.map((c) => `classDef ${c} stroke-width:1px`);
   const riskClasses = portable ? TM_RISK_CLASSES : TM_RISKS.map((r) => `classDef ${tmRiskClass(r)} stroke-width:1px`);
-  const lines = ['flowchart TB', ...[...classes, ...(overlay ? riskClasses : [])].map((c) => `  ${c}`), ...tmIconClassDefs(model.elements)];
+  const lines = ['flowchart TB', ...[...classes, ...(overlay ? riskClasses : [])].map((c) => `  ${c}`), ...tmIconClassDefs(model.elements, opts)];
   const styles = [];
   const emit = (e, pad) => {
     const id = ids.get(e.id);
@@ -123,13 +123,14 @@ function tmStructure(model, level, opts = {}) {
       if (portable) styles.push(`  style ${id} fill:none,stroke:#888,stroke-dasharray:6 4`);
       return;
     }
-    let label = `${e.icon ? TM_ICON_LINE : ''}<b>${tmMmText(e.title)}</b><br/>${tmMmText(tmC4Kind(e))}`;
+    const icon = tmIconFor(e, opts);
+    let label = `${icon ? TM_ICON_LINE : ''}<b>${tmMmText(e.title)}</b><br/>${tmMmText(tmC4Kind(e))}`;
     if (e.description && !compact) label += `<br/><i>${tmMmText(tmClip(e.description, 90))}</i>`;
     if (badge) label += `<br/>${badge}`;
     const shape = e.kind === 'person' ? ['(', ')'] : e.kind === 'store' ? ['[(', ')]'] : e.kind === 'queue' ? ['[[', ']]'] : ['[', ']'];
     lines.push(`${pad}${id}${shape[0]}"${label}"${shape[1]}`);
     lines.push(`${pad}class ${id} ${tmC4Class(e)}`);
-    lines.push(...tmIconClassLines(pad, id, e.icon));
+    lines.push(...tmIconClassLines(pad, id, icon));
     const risk = overlay ? tmWorstRisk(threats) : '';
     if (risk) lines.push(`${pad}class ${id} ${tmRiskClass(risk)}`);
   };

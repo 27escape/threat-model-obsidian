@@ -35,7 +35,9 @@ function tmThreatTableInto(el, threats, model = null) {
   if (!threats.length) return;
   const d = el.createEl('details', { cls: 'tm-threats' });
   d.open = true;
-  d.createEl('summary', { text: `Threats in this view (${threats.length})` });
+  // the threat register, as in the report: the whole of it, or the part this view shows
+  const total = model ? model.threats.length : threats.length;
+  d.createEl('summary', { text: threats.length === total ? `Threat register (${total})` : `Threat register: ${threats.length} of ${total} threats in this view` });
   const table = d.createEl('table', { cls: 'tm-threat-table' });
   const head = table.createEl('thead').createEl('tr');
   for (const h of ['ID', 'STRIDE', 'Risk', 'Rating', 'Status', 'Threat', 'Applies to', 'Mitigation and controls']) head.createEl('th', { text: h });

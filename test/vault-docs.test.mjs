@@ -40,3 +40,14 @@ test('the guide notes in the sample vault are up to date with README.md and docs
   process.chdir(fileURLToPath(new URL('..', import.meta.url)));
   for (const { path, text } of vaultDocs()) assert.equal(fs.readFileSync(path, 'utf8'), text, `${path} is out of date: node tools/build.mjs`);
 });
+
+test('the README’s screenshots are left out of the sample vault’s copy, and every one it names exists', async () => {
+  const { withoutScreenshots } = await import('../tools/vault-docs.mjs');
+  const readme = fs.readFileSync('README.md', 'utf8');
+  const shots = [...readme.matchAll(/\]\((docs\/images\/screenshots\/[^)]+)\)/g)].map((m) => m[1]);
+  assert.ok(shots.length >= 1);
+  for (const s of shots) assert.ok(fs.existsSync(s), `${s} is missing`);
+  const copy = withoutScreenshots(readme);
+  assert.doesNotMatch(copy, /screenshots/);
+  assert.match(copy, /\n## A threat model\n/);
+});

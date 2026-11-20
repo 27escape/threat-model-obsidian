@@ -2,14 +2,15 @@
 // Names are checked later by tmBuildModel (model.js); this file only knows the grammar (docs/language.md).
 
 const TM_KINDS = ['person', 'external', 'system', 'container', 'component', 'store', 'queue'];
-const TM_KIND_ALIASES = { io: 'external', function: 'container', database: 'store' };
-const TM_ZONE_WORDS = ['zone', 'boundary'];
+const TM_ZONE_WORDS = ['zone'];
+// the .flow format's words, no longer kinds: only named, so that a model still using one is told what to write
+const TM_OLD_KINDS = { io: 'external', function: 'container', database: 'store', boundary: 'zone' };
 // what may be nested inside each kind
 const TM_CONTAINS = {
   system: ['container', 'component', 'store', 'queue'],
   container: ['component', 'store', 'queue'],
 };
-const TM_RESERVED = [...TM_KINDS, ...Object.keys(TM_KIND_ALIASES), ...TM_ZONE_WORDS, 'threat', 'control', 'scenario'];
+const TM_RESERVED = [...TM_KINDS, ...TM_ZONE_WORDS, 'threat', 'control', 'scenario'];
 
 class TmParser {
   constructor(tokens) {
@@ -134,7 +135,10 @@ class TmParser {
       if (where === 'element') this.fail('a zone can\'t go inside an element: give the element "zone = …" instead');
       return this.zone(ctx);
     }
-    const kind = TM_KIND_ALIASES[tok.value] || tok.value;
+    if (TM_OLD_KINDS[tok.value] && (next.kind === 'id' || next.kind === 'string')) {
+      this.fail(`"${tok.value}" was a word in the .flow format: write "${TM_OLD_KINDS[tok.value]}" instead`);
+    }
+    const kind = tok.value;
     if (TM_KINDS.includes(kind)) {
       if (where === 'element') {
         const parent = ctx.element;

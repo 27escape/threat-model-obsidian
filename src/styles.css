@@ -17,6 +17,11 @@
   margin-bottom: var(--size-4-2);
 }
 
+/* in Live Preview, Obsidian puts its own "edit this block" button in the block's top right corner: keep the bar clear of it */
+.markdown-source-view .tm-block .tm-bar {
+  padding-right: var(--size-4-8);
+}
+
 .tm-title {
   font-weight: var(--font-semibold);
   margin-right: auto;
@@ -373,6 +378,7 @@ svg tspan.tm-tid-closed { fill: var(--text-muted); text-decoration: line-through
 /* findings from the model (rules.js) under the table, and the key's dashed arrow */
 .tm-findings summary { cursor: pointer; color: var(--text-muted); font-weight: var(--font-semibold); }
 .tm-findings ul { margin: var(--size-2-2) 0; }
+.tm-legend-icon svg { width: 1em; height: 1em; vertical-align: -0.15em; }
 .tm-legend-dashed::before { content: ''; display: inline-block; width: 2em; margin-right: var(--size-2-2); vertical-align: middle; border-top: 2px dashed var(--text-muted); }
 
 /* the Status column: open in its risk colour, each closed status in its own; then an open threat's control progress */

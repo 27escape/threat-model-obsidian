@@ -3,7 +3,7 @@
 // Used by the editor (highlight-editor.js), "threat-source" code blocks in Reading view, and the .threat file view.
 // Colours are in styles.css (.tm-hl-*), taken from the theme's own code colours.
 
-const TM_HL_KEYWORDS = new Set([...TM_KINDS, ...Object.keys(TM_KIND_ALIASES), ...TM_ZONE_WORDS, 'threat', 'control', 'scenario']);
+const TM_HL_KEYWORDS = new Set([...TM_KINDS, ...TM_ZONE_WORDS, 'threat', 'control', 'scenario']);
 
 /** The class for a hashtag: STRIDE letters, risks, statuses and sensitive data each have their own. */
 function tmTagClass(tag) {

@@ -3,6 +3,7 @@
 Obsidian plugin (desktop and mobile): draws threat models written in `threat` code blocks and `.threat` files as a C4-style Structure view, a Sequence view and a Data flow view; the Report button saves a Markdown report as a note and opens it in a new tab. Plain JavaScript, no runtime dependencies, no bundler: `tools/build.mjs` joins `src/` files in the order listed in `tools/files.json`. Same conventions as Kevin's Neon Work and Simple Glossary plugins.
 
 ## Read first
+- `docs/status.md`: what is released, what is decided, ideas under consideration, the checks to run and known limits. Read it first in a new chat, and keep it up to date.
 - `docs/language.md`: the threat model language. It is the specification: change it first, then the code.
 - `docs/architecture.md`: how the parts fit together.
 - `MAP.md`: every source file with its functions, classes and methods (regenerate: `node tools/map.mjs`). Find code there first, then open only that file.

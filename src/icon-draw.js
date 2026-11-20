@@ -40,21 +40,36 @@ function tmIconPlace(label) {
   }
 }
 
+/** Where a zone's icon goes: in the room left at the end of its title (TM_ZONE_ICON_ROOM), centred on the line;
+ *  null while it isn't laid out yet. */
+function tmIconBefore(label) {
+  try {
+    const box = label.getBBox();
+    if (!box.width && !box.height) return null;
+    return { x: box.x + box.width - TM_ICON_SIZE / 2 - 2, y: box.y + box.height / 2 + TM_ICON_SIZE / 2 - 4 };
+  } catch {
+    return null;
+  }
+}
+
 /** Draw the icons in every diagram inside root that hasn't got them yet. Returns how many it drew. */
 function tmDrawIcons(root) {
   let done = 0;
-  for (const node of root.querySelectorAll('svg g.pele-node[class*="tmIcon_"]')) {
+  for (const node of root.querySelectorAll('svg g.pele-node[class*="tmIcon_"], svg g.pele-cluster[class*="tmIcon_"]')) {
     if (node.querySelector(':scope > .tm-icon')) continue;
     const classes = [...node.classList];
     const part = (prefix) => (classes.find((c) => c.startsWith(prefix)) || '').slice(prefix.length);
     const name = part('tmIcon_').replace(/_/g, '-');
-    const label = node.querySelector('text.pele-label') || node.querySelector(':scope > text') || node.querySelector('text');
+    const cluster = node.classList.contains('pele-cluster'); // a zone: the icon goes after its title
+    const label = cluster
+      ? node.querySelector(':scope > text.pele-cluster-label') || node.querySelector(':scope > text')
+      : node.querySelector('text.pele-label') || node.querySelector(':scope > text') || node.querySelector('text');
     if (!TM_ICON_NAME.test(name)) continue;
     if (!label) {
       tmIconTrouble(`a box with icon "${name}" has no label to put it in`);
       continue;
     }
-    const at = tmIconPlace(label);
+    const at = cluster ? tmIconBefore(label) : tmIconPlace(label);
     if (!at) continue; // not laid out yet: tried again on the next change
     const { x, y } = at;
     const fg = tmIconClassColour(part('tmIconFg_'));

@@ -183,7 +183,7 @@ checkout -> events "Order placed"
 | `store` | Database | Data store | — |
 | `queue` | Queue | Data store | — |
 
-The kind names from `.flow` also work: `io` is `external`, `function` is `container`, `database` is `store` and `boundary` is `zone`.
+The `.flow` format's names for kinds (`io`, `function`, `database`, and `boundary` for a zone) aren't part of this language: a model using one is told the word to write instead (`external`, `container`, `store`, `zone`).
 
 Element attributes:
 
@@ -243,7 +243,30 @@ web -> api "Calls"
 api -> db "Reads"
 ```
 
-`icon` names an icon from [Lucide](https://lucide.dev/icons), the icon set Obsidian uses, such as `"user"`, `"users"`, `"database"`, `"server"`, `"globe"`, `"smartphone"`, `"shield"`, `"lock"`, `"key"`, `"mail"` or `"cloud"`. Write it in quotes. The icon sits above the element's name in the Structure and Data flow views, in the colour of the box's text unless `icon_colour` gives one; `icon_background` puts it on a rounded square of that colour. Colours are written as `"#08427b"` or as a name such as `"white"`. `icon = "none"` leaves it out.
+`icon` names an icon from [Lucide](https://lucide.dev/icons), the icon set Obsidian uses, such as `"user"`, `"users"`, `"database"`, `"server"`, `"globe"`, `"smartphone"`, `"shield"`, `"lock"`, `"key"`, `"mail"` or `"cloud"`. Write it in quotes. The icon sits above the element's name in the Structure and Data flow views, in the colour of the box's text unless `icon_colour` gives one; `icon_background` puts it on a rounded square of that colour. Colours are written as `"#08427b"` or as a name such as `"white"`.
+
+An element that doesn't name an icon gets a default one:
+
+- A `person` is always `user`.
+- Otherwise its `technology` decides, when a word in it is known:
+
+  | Technology (any of these words) | Icon |
+  |---|---|
+  | iOS, Android, Xamarin, React Native, Flutter, mobile | `smartphone` |
+  | Kafka, RabbitMQ, SQS, SNS, Service Bus, Event Hubs, MQTT, queue | `list-ordered` |
+  | PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, MongoDB, Redis, DynamoDB, Cosmos DB, SQLite, database | `database` |
+  | S3, Blob storage, object storage, file share, files, SharePoint | `archive` |
+  | email, SMTP, IMAP, Exchange | `mail` |
+  | LDAP, Active Directory, Entra ID, IdP, OAuth, OpenID Connect, SAML, Keycloak, Okta, Auth0 | `key-round` |
+  | React, Angular, Vue, Svelte, web, SPA, HTML, JavaScript, TypeScript, browser | `globe` |
+  | Node.js, Java, .NET, ASP.NET, C#, Go, Python, Django, Spring, Ruby, PHP, API, REST, gRPC | `server` |
+
+  The first row that matches wins, so "React Native" is a phone, not a web page.
+- Otherwise its kind decides: `external` is `building-2`, `store` is `database` and `queue` is `list-ordered`.
+
+Systems, containers and components have no default of their own, as they vary too much for one icon to say anything. If you want one, these work well: `container` (the shipping container) or `boxes` for a system, `app-window` or `server` for a container, and `puzzle` for a component.
+
+`icon_colour` and `icon_background` colour a default icon too. `icon = "none"` leaves the icon off one element, and the *Default icons* setting leaves all the defaults off (icons the model names are still drawn).
 
 Font Awesome names such as `"fa:fa-user"`, used on Mermaid's own site, don't work: Obsidian doesn't have those icons, and the plugin never fetches anything from the internet. The model warns about one and suggests the Lucide name where there is an obvious one. A name Obsidian doesn't know shows as a red "?"; hover over it to see the name.
 
@@ -255,12 +278,12 @@ Nesting an element inside a `system` or `container` says it is part of it, as in
 
 ## Zones (trust boundaries)
 
-A zone is a trust boundary: an area where everything is trusted to the same degree, such as the internet, a DMZ or a cloud account. The Data flow view draws zones as boxes; the Sequence view groups participants by zone; the report lists every flow that crosses from one zone to another.
+A zone is a trust boundary: an area where everything is trusted to the same degree, such as the internet, a DMZ or a cloud account. The Data flow view draws zones as boxes, with a warning shield (`shield-alert`) after the title of a zone whose `trust` says untrusted; the Sequence view groups participants by zone; the report lists every flow that crosses from one zone to another.
 
 There are two ways to put an element in a zone, and you can mix them:
 
 ```threat-source
-// 1. nest it inside the zone (simple models, like the old "boundary")
+// 1. nest it inside the zone (simple models)
 zone dmz "Corporate DMZ" { trust = "restricted"
   container gateway "Auth Gateway"
 }
@@ -275,7 +298,7 @@ webapp -> gateway "Signs in"
 ```
 
 ```threat
-// 1. nest it inside the zone (simple models, like the old "boundary")
+// 1. nest it inside the zone (simple models)
 zone dmz "Corporate DMZ" { trust = "restricted"
   container gateway "Auth Gateway"
 }
@@ -365,7 +388,7 @@ threat R3 "Traffic inside the VM isn't encrypted" #TI #medium {
 | STRIDE hashtags | `#S` spoofing, `#T` tampering, `#R` repudiation, `#I` information disclosure, `#D` denial of service, `#E` elevation of privilege. Letters can be combined in one tag, in any order: `#STR` is the same as `#S #T #R`, and `#IE` as `#I #E`. The long words work too (`#spoofing`). |
 | Risk hashtag | `#critical`, `#high`, `#medium` or `#low`: a quick rating, when you don't give likelihood and impact |
 | Status hashtag | `#open` (the default), `#mitigated`, `#accepted` or `#transferred`; `status = "…"` does the same. Anything but open is closed: dealt with by a fix (mitigated), a decision to live with it (accepted) or someone else carrying it (transferred). Closed threats colour nothing on the diagrams, their IDs are struck through, and the report lists them briefly after the open ones. |
-| `cvss` | For a threat that is a known vulnerability: its CVSS 3.0 or 3.1 vector, such as `"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"`. The score is worked out from it and gives the risk. The table's tooltip and the report explain the score (where it sits on CVSS's own scale: 7.0 to 8.9 is high, and so on) and the vector in words ("Attack vector: network · …"), and link to FIRST's CVSS calculator with the vector filled in. |
+| `cvss` | For a threat that is a known vulnerability: its CVSS 3.0 or 3.1 vector, such as `"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"`. The score is worked out from it and gives the risk. The threat register's tooltip and the report explain the score (where it sits on CVSS's own scale: 7.0 to 8.9 is high, and so on) and the vector in words ("Attack vector: network · …"), and link to FIRST's CVSS calculator with the vector filled in. |
 | `on` | Other elements, zones and flows the threat is about: see above |
 | `likelihood`, `impact` | The main way to rate a threat: each 1 to 5, or a word: likelihood `rare`, `unlikely`, `possible`, `likely`, `almost-certain`; impact `negligible`, `minor`, `moderate`, `major`, `severe`. See below |
 | `residual_likelihood`, `residual_impact` | The likelihood and impact once the threat's controls are in place; give either, and the other is the threat's own |
@@ -381,7 +404,7 @@ Rate each threat one way:
 
 A threat rated more than one way gets a warning, and the first in that list is used. (`score = …`, from the original DataFlow format, is still read but warned about: give likelihood and impact instead.)
 
-The table under each diagram shows how each threat is rated ("4 × 5 = 20" or "CVSS 6.1"); hover over it to see what the numbers mean. A CVSS rating's tooltip says what the score means on CVSS's scale (none, low 0.1 to 3.9, medium 4.0 to 6.9, high 7.0 to 8.9, critical 9.0 to 10.0) and spells out the vector; the rating is also a link to FIRST's CVSS calculator (FIRST publishes CVSS), with its vector filled in, to see or change it; the vector goes after a `#`, which browsers don't send to the website. Diagrams show the same after each threat ID: `T01 (4×5)` or `T04 (6.1)`.
+The threat register under each diagram shows how each threat is rated ("4 × 5 = 20" or "CVSS 6.1"); hover over it to see what the numbers mean. A CVSS rating's tooltip says what the score means on CVSS's scale (none, low 0.1 to 3.9, medium 4.0 to 6.9, high 7.0 to 8.9, critical 9.0 to 10.0) and spells out the vector; the rating is also a link to FIRST's CVSS calculator (FIRST publishes CVSS), with its vector filled in, to see or change it; the vector goes after a `#`, which browsers don't send to the website. Diagrams show the same after each threat ID: `T01 (4×5)` or `T04 (6.1)`.
 
 With a residual likelihood or impact too, the threat has a risk before and after its controls:
 
@@ -394,7 +417,7 @@ threat T01 "Credential stuffing on the login form" #S {
 }
 ```
 
-The table under each diagram shows both risks ("Critical → High") and the likelihood × impact. The report places the open threats on a risk matrix, once as assessed and once after controls, and its summary counts the open threats by the risk left after controls. Diagrams colour threats by the risk as assessed.
+The threat register under each diagram shows both risks ("Critical → High") and the likelihood × impact. The report places the open threats on a risk matrix, once as assessed and once after controls, and its summary counts the open threats by the risk left after controls. Diagrams colour threats by the risk as assessed.
 
 ## Controls
 
@@ -419,9 +442,9 @@ A control is `control`, an ID (needed, so threats can name it), a title, hashtag
 | `owner`, `due` | Who is doing it and by when; shown in the report |
 | `description` | Shown in the report |
 
-An open threat's status in the table shows its progress ("Open · 1 of 2 controls in place"). When all of an open threat's controls are implemented or verified, the model reminds you to set its status to mitigated if that deals with it; the plugin never closes a threat itself, as only a person can judge whether the controls are enough.
+An open threat's status in the threat register under each diagram shows its progress ("Open · 1 of 2 controls in place"). When all of an open threat's controls are implemented or verified, the model reminds you to set its status to mitigated if that deals with it; the plugin never closes a threat itself, as only a person can judge whether the controls are enough.
 
-A threat's own `mitigation = "…"` still works for a quick note. Controls add what a mitigation can't: one fix shared by several threats, its progress, and who owns it. The table under each diagram lists a threat's controls with its mitigation. The report lists each threat's controls in the register, has a section for the controls themselves (planned first), and says in its summary how many open threats have a control in place and which have nothing at all.
+A threat's own `mitigation = "…"` still works for a quick note. Controls add what a mitigation can't: one fix shared by several threats, its progress, and who owns it. The threat register under each diagram lists a threat's controls with its mitigation. The report lists each threat's controls in the register, has a section for the controls themselves (planned first), and says in its summary how many open threats have a control in place and which have nothing at all.
 
 ## Scenarios
 
@@ -493,7 +516,7 @@ Some tags mean something to the plugin:
 | `#critical #high #medium #low` | Risk, on threats |
 | `#open #mitigated #accepted #transferred` | Status, on threats |
 | `#planned #implemented #verified` | Status, on controls |
-| `#secret #pii #confidential` | Sensitive data: the report lists every flow that carries it across a zone boundary |
+| `#secret #pii #confidential` | Sensitive data: marked with a padlock (🔒) in the Data flow view, and the report lists every flow that carries it across a zone boundary |
 | `#public` | Data that is not sensitive |
 
 Every other tag is yours, such as `#third-party`, `#legacy` or `#payments`.
@@ -504,14 +527,14 @@ Every other tag is yours, such as `#third-party`, `#legacy` or `#payments`.
 | --- | --- | --- | --- |
 | **Structure** | Mermaid flowchart in C4 style | systems and containers | The level list switches between *Context* (people, systems and external systems), *Container* (inside each system) and *Component* (everything). Flows are shown between the elements visible at that level. With the *Threats* switch on (the default), boxes and arrows carry the coloured STRIDE letters and their threat IDs, and are outlined or coloured by their most serious open threat; threats on hidden elements, and on flows hidden inside a box, show on that box. The list offers only the levels that show something different: *Container* when a system has something inside it, *Component* when a container does; with nothing nested there is no level list. |
 | **Sequence** | Mermaid sequence diagram | zones | A list chooses the scenario. Threats are notes: a flow's across that flow, an element's across the step where it first takes part, headed with its name. Each STRIDE letter is in a box of its own colour, the risk of an open threat louder as it rises (italic, bold, underlined, then capitals) and coloured, and a tint behind the note that strengthens with the risk. |
-| **Data flow** | Mermaid flowchart | zones (trust boundaries) | External entities are grey boxes, processes blue circles and stores red cylinders. Flows are numbered, with STRIDE letters (each in its coloured box) and threat IDs, and coloured by their most serious open risk. |
+| **Data flow** | Mermaid flowchart | zones (trust boundaries) | External entities are grey boxes, processes blue circles and stores red cylinders. Flows are numbered, with STRIDE letters (each in its coloured box) and threat IDs, and coloured by their most serious open risk. Sensitive data has a padlock (🔒) and an untrusted zone a warning shield, unless *Default icons* is off. |
 | **Report ↗** | A new note, opened in a new tab | — | Not a view: a summary (top risks and what needs doing), scope and method, the threat register, controls, an action plan by owner, findings from the model, a risk matrix, the diagrams, flows crossing zones, sensitive data crossing zones, gaps in STRIDE coverage, elements and flows, saved as a note ready to print or export to PDF. |
 
-Under each diagram is a table of the threats it shows (threats about the whole model are in every table), then a key to its colours. The threat IDs on boxes and arrows match the table's first column, so each mark on the diagram can be looked up (hover over an ID to see its threat; click it to fade everything the threat doesn't apply to and bring its row into view, and click again to clear); a threat's rating follows its ID in brackets: `T01 (4×5)` for likelihood × impact, `T04 (6.1)` for a CVSS score. They are listed most serious first, at most four to a box or arrow (then "+2" and so on), and an open threat's ID gets louder as its risk rises, as the risk word does in the Sequence view (italic, bold, underlined) and in its risk colour; closed threats' IDs are plain. The *Compact* switch shortens labels (no descriptions or data; a flow's number in the Data flow view) and leaves the detail to the table.
+Under each diagram is its threat register: the threats it shows (threats about the whole model are in every one), then a key to its colours. The threat IDs on boxes and arrows match the register's first column, so each mark on the diagram can be looked up (hover over an ID to see its threat; click it to fade everything the threat doesn't apply to and bring its row in the register into view, and click again to clear); a threat's rating follows its ID in brackets: `T01 (4×5)` for likelihood × impact, `T04 (6.1)` for a CVSS score. They are listed most serious first, at most four to a box or arrow (then "+2" and so on), and an open threat's ID gets louder as its risk rises, as the risk word does in the Sequence view (italic, bold, underlined) and in its risk colour; closed threats' IDs are plain. The *Compact* switch shortens labels (no descriptions or data; a flow's number in the Data flow view) and leaves the detail to the table.
 
 ## Findings from the model
 
-Some risks follow from facts the model already holds, whether or not anyone has written a threat for them. The plugin checks for these and lists them under the table (*Findings from the model*) and in the report, with a line in its *Needs action* summary:
+Some risks follow from facts the model already holds, whether or not anyone has written a threat for them. The plugin checks for these and lists them under the threat register (*Findings from the model*) and in the report, with a line in its *Needs action* summary:
 
 | Finding | Risk |
 | --- | --- |
@@ -531,6 +554,7 @@ These stop the model being drawn, and are shown with their line numbers:
 - a flow, `zone =`, `on =`, `covers =`, `controls =` or scenario step naming an ID that doesn't exist, or `on =` naming a flow there isn't
 - a control inside a block, or without an ID
 - an element nested where it can't be (for example inside a `store`)
+- a kind name from the `.flow` format (`io`, `function`, `database`, `boundary`): the message says the word to use
 
 These are shown as warnings under the diagram (unless the *Show warnings* setting is off) and at the end of the report:
 
@@ -553,14 +577,13 @@ statement  = attribute | element | zone | flow | threat | control | scenario ;
 attribute  = ID "=" value ;
 value      = STRING | NUMBER | ID | TAG | "[" [ value { "," value } [ "," ] ] "]" ;
 element    = KIND ID [ STRING ] { TAG } [ "{" { statement } "}" ] ;
-zone       = ( "zone" | "boundary" ) ID [ STRING ] { TAG } [ "{" { statement } "}" ] ;
+zone       = "zone" ID [ STRING ] { TAG } [ "{" { statement } "}" ] ;
 flow       = ID ( "->" | "<-" ) ID [ STRING ] { TAG } [ "{" { statement } "}" ] ;
 threat     = "threat" [ ID ] STRING { TAG } [ "{" { attribute } "}" ] ;
 control    = "control" ID STRING { TAG } [ "{" { attribute } "}" ] ;   (top level only)
 scenario   = "scenario" ID [ STRING ] { TAG } "{" { attribute | step } "}" ;
 step       = ID ( "->" | "<-" ) ID [ STRING ] ;
-KIND       = "person" | "external" | "system" | "container" | "component" | "store" | "queue"
-           | "io" | "function" | "database" ;
+KIND       = "person" | "external" | "system" | "container" | "component" | "store" | "queue" ;
 ```
 
 Inside a flow's block only attributes and threats are allowed; inside a threat's or control's block, only attributes.

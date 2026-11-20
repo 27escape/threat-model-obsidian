@@ -48,15 +48,15 @@ test('tags in text, not in web addresses or numbers', () => {
   assert.deepEqual(tmStrideOf(['SS', 'ie', 'SIX', 'Ie']), ['S']);
 });
 
-test('elements: kinds, titles, nesting and the other names for kinds', () => {
+test('elements: kinds, titles and nesting', () => {
   const { model } = ok(`
     system shop "Shop" {
       container api "API" { technology = "Go" }
       store db
     }
-    io visitor "Visitor"
-    function worker
-    database cache
+    external visitor "Visitor"
+    container worker
+    store cache
   `);
   const by = Object.fromEntries(model.elements.map((e) => [e.id, e]));
   assert.equal(by.api.parent, 'shop');
@@ -254,4 +254,15 @@ test('on: unknown names and missing flows are errors', () => {
   fails('container a\nthreat R "x" #S { on = [a -> nowhere] }', 2, /on: there is no flow a -> nowhere/);
   fails('container a\nthreat R "x" #S { on = [ghost] }', 2, /on: "ghost" isn't defined/);
   fails('container a\nthreat R "x" #S { on = ["a"] }', 2, /isn't an element, zone or flow/);
+});
+
+test('the .flow format\u2019s kind names are gone, and a model still using one is told what to write', () => {
+  fails('io visitor "Visitor"', 1, /"io" was a word in the \.flow format: write "external" instead/);
+  fails('container a\nfunction worker', 2, /write "container"/);
+  fails('database cache', 1, /write "store"/);
+  fails('boundary web "Web" { }', 1, /write "zone"/);
+  // the words are free to be IDs now
+  const { model } = ok('container database "DB"\nperson io\nio -> database "Uses"');
+  assert.deepEqual(model.elements.map((e) => e.id), ['database', 'io']);
+  assert.equal(model.flows[0].from, 'io');
 });

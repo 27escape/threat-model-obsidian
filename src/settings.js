@@ -71,6 +71,16 @@ class TmSettingTab extends PluginSettingTab {
           s.showWarnings = v;
           await this.plugin.saveSettings();
 
+    new Setting(containerEl)
+      .setName('Default icons')
+      .setDesc('Give elements without an icon of their own one from their technology or kind (a person, React, PostgreSQL…), and in the Data flow view mark sensitive data with a padlock and untrusted zones with a warning shield. icon = "none" leaves the icon off one element.')
+      .addToggle((t) =>
+        t.setValue(s.defaultIcons).onChange(async (v) => {
+          s.defaultIcons = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
     new Setting(containerEl).setName('Reports').setHeading();
 
     new Setting(containerEl)
