@@ -30,4 +30,4 @@ Obsidian plugin (desktop and mobile): draws threat models written in `threat` co
 - Keep the language backwards compatible once released; keep settings keys and command ids; migrate saved settings on load when a default changes.
 - Use British English in UI text and docs.
 - Files: one job each, target under 400 lines (soft cap 500). New feature = new file + entry in `tools/files.json` + `node tools/map.mjs`.
-- Every bug fixed gets a unit test or a check. Commits end with the attribution lines; the author is Kevin Mulholland <kevin@27escape.com>.
+- Every bug fixed gets a unit test or a check. Commits have no Claude attribution lines (no "Co-Authored-By: Claude", no "Claude-Session"); the author is Kevin Mulholland <kevin@27escape.com>.
