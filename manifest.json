@@ -1,7 +1,7 @@
 {
   "id": "threat-model",
   "name": "Threat Modelling",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "minAppVersion": "1.15.0",
   "description": "Write threat models in your notes and see them as C4-style structure, sequence and data-flow diagrams, with a STRIDE threat report.",
   "author": "Kevin Mulholland",
