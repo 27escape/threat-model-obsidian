@@ -5,13 +5,13 @@ chat; update it when something here changes.
 
 ## Released
 
-- **0.1.0** is published on GitHub (27escape/threat-model-obsidian).
-- **0.2.0 is ready to release** (`docs/release-notes/0.2.0.md`, and its line in the README's `[!NOTE]` block): a minor
-  version, as the `.flow` kind names are gone. It adds default icons, the untrusted-zone shield and the padlock on
-  sensitive data, the threat register named the same everywhere, the bar kept clear of Obsidian's edit-block button in
-  Live Preview, and the README screenshots and VS Code tip. Release with `tools/release.sh 0.2.0`.
-- **Obsidian's community plugin list:** not submitted yet. The language changes are finished, so it can go in after 0.2.0. Submitting
-  is a pull request to `obsidianmd/obsidian-releases` adding the plugin to `community-plugins.json`.
+- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0 and 0.2.0. 0.2.0 dropped the `.flow` kind names
+  and added default icons, the untrusted-zone shield and the padlock on sensitive data.
+- **In Obsidian's community plugin list** since 0.2.0: https://community.obsidian.md/plugins/threat-model (review
+  passed). The listing shows no plugin icon; the plugin's own icon (`shield-half`) is on the tab of a `.threat` file.
+- **0.2.1 is ready to release** (`docs/release-notes/0.2.1.md`): fixes the settings page, which in 0.2.0 showed only
+  the first three settings (a misplaced bracket in `settings.js`; now tested); and the `.threat` tab icon changed from
+  `shield-alert` (which now means an untrusted zone) to `shield-half`. Release with `tools/release.sh 0.2.1`.
 
 ## Decided
 
@@ -46,6 +46,16 @@ Not agreed; each wants a conversation before any work.
 7. **References on threats:** CWE or CAPEC numbers, and links to tickets.
 8. **Data assets as things of their own** (named, with how confidential and how important their integrity is), so the
    model can tell where each one travels; today sensitive data is marked with hashtags.
+9. **A visual editor for threats, controls and elements,** opened from the diagram: click a box, arrow or threat ID
+   to edit it in a form, or add a threat to it, without writing the language by hand. Ideas to take from OWASP
+   Threat Dragon (open source, Apache 2.0; https://owasp.org/www-project-threat-dragon/docs-2/): select an element
+   to see its properties and its threats, a *New threat* button for the selected element, STRIDE categories offered
+   per kind of element ("STRIDE per element"), and an out-of-scope flag. OWASP Precogly (Apache 2.0) is a newer one
+   with a richer diagram editor. Constraints here: the model stays text; a save changes only the statement edited
+   (keeping the user's comments and layout) and only when the user saves; never the note being typed in.
+10. CLI to generate diagrams and reports from .threat files
+11. claude or AI skill that can be used elsewhere to be able to generate threat diagrams from a photo or image etc
+
 
 ## Checks to run
 

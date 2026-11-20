@@ -70,6 +70,8 @@ class TmSettingTab extends PluginSettingTab {
         t.setValue(s.showWarnings).onChange(async (v) => {
           s.showWarnings = v;
           await this.plugin.saveSettings();
+        })
+      );
 
     new Setting(containerEl)
       .setName('Default icons')
@@ -123,9 +125,6 @@ class TmSettingTab extends PluginSettingTab {
         t.setValue(s.reportDiagrams).onChange(async (v) => {
           s.reportDiagrams = v;
           await this.plugin.saveSettings();
-        })
-      );
-
         })
       );
   }

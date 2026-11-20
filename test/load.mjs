@@ -5,9 +5,34 @@ import vm from 'node:vm';
 
 const o = JSON.parse(fs.readFileSync(new URL('../tools/files.json', import.meta.url), 'utf8'));
 class Stub {}
+// a component (toggle, dropdown, text box) whose methods all chain, for the settings page
+const chain = () => new Proxy(function () {}, { get: () => chain(), apply: () => chain() });
+// records each setting the settings page makes, so a test can list them
+class Setting {
+  constructor() {
+    Setting.made.push(this);
+  }
+  setName(n) {
+    this.name = n;
+    return this;
+  }
+  setDesc() {
+    return this;
+  }
+  setHeading() {
+    this.heading = true;
+    return this;
+  }
+}
+Setting.made = [];
+for (const m of ['addToggle', 'addDropdown', 'addText', 'addSearch', 'addButton'])
+  Setting.prototype[m] = function (cb) {
+    cb(chain());
+    return this;
+  };
 const stubModule = (extra = {}) => new Proxy(extra, { get: (t, k) => (k in t ? t[k] : Stub) });
 const modules = {
-  obsidian: stubModule({ normalizePath: (p) => p.replace(/[\\/]+/g, '/').replace(/^\/+|\/+$/g, '') }),
+  obsidian: stubModule({ Setting, normalizePath: (p) => p.replace(/[\\/]+/g, '/').replace(/^\/+|\/+$/g, '') }),
   '@codemirror/view': stubModule({ ViewPlugin: { fromClass: (c) => c }, Decoration: { mark: (s) => s } }),
   '@codemirror/state': stubModule({
     // collects what the editor extension adds, so a test can read it back

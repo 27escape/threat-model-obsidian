@@ -19,7 +19,7 @@ class TmFileView extends TextFileView {
   }
 
   getIcon() {
-    return 'shield-alert';
+    return 'shield-half'; // the plugin's own icon; shield-alert means an untrusted zone (icons.js)
   }
 
   onOpen() {

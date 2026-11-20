@@ -440,3 +440,25 @@ test('default icons from the technology, the untrusted-zone shield and the padlo
   const off = tmDataflow(m, { defaultIcons: false });
   assert.doesNotMatch(off, /shield_alert|\u{1F512}|tmIcon_/u);
 });
+
+test('a .threat file\'s tab has the plugin\'s icon, not the untrusted-zone shield', () => {
+  const { TmFileView, TM_UNTRUSTED_ICON } = load(['TmFileView', 'TM_UNTRUSTED_ICON']);
+  assert.equal(TmFileView.prototype.getIcon(), 'shield-half');
+  assert.notEqual(TmFileView.prototype.getIcon(), TM_UNTRUSTED_ICON);
+});
+
+test('the settings page shows every setting (a bracket out of place once hid all after "Show warnings")', () => {
+  const { TmSettingTab, TM_DEFAULTS, Setting } = load(['TmSettingTab', 'TM_DEFAULTS', 'Setting']);
+  const names = (settings) => {
+    Setting.made.length = 0;
+    const tab = Object.assign(Object.create(TmSettingTab.prototype), {
+      containerEl: { empty() {} },
+      plugin: { settings: { ...TM_DEFAULTS, ...settings }, saveSettings: async () => {} },
+    });
+    tab.display();
+    return Setting.made.map((x) => x.name);
+  };
+  const always = ['First view', 'First C4 level', 'Show warnings', 'Default icons', 'Reports', 'Save reports', 'Include the diagrams'];
+  assert.deepEqual(names({ reportLocation: 'reports' }), always);
+  assert.deepEqual(names({ reportLocation: 'folder' }), [...always.slice(0, 6), 'Report folder', 'Include the diagrams']);
+});

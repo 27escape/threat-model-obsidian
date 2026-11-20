@@ -5,6 +5,8 @@ An Obsidian plugin for writing threat models in your notes. You describe a syste
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
 > [!NOTE]
+> **0.2.1:** the settings missing from the settings page in 0.2.0 are back, and a `.threat` file's tab has the plugin's own icon, `shield-half`. See [the release notes](docs/release-notes/0.2.1.md).
+>
 > **0.2.0:** default icons, marks for untrusted zones and sensitive data, and the old `.flow` words (`io`, `function`, `database`, `boundary`) are gone. See [the release notes](docs/release-notes/0.2.0.md).
 >
 > **0.1.0:** first release. See [the release notes](docs/release-notes/0.1.0.md).
