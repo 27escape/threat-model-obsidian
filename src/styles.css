@@ -1,0 +1,389 @@
+/* Threat Modelling: the bar above each model, errors, warnings and the .threat file view. Obsidian's own colours. */
+
+.tm-block {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: var(--size-4-2) var(--size-4-3);
+  margin: var(--size-4-2) 0;
+}
+
+.tm-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding-bottom: var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: var(--size-4-2);
+}
+
+.tm-title {
+  font-weight: var(--font-semibold);
+  margin-right: auto;
+}
+
+.tm-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1);
+  align-items: center;
+}
+
+.tm-extra:empty {
+  display: none;
+}
+
+.tm-btn {
+  font-size: var(--font-ui-small);
+  padding: var(--size-2-1) var(--size-4-2);
+  height: auto;
+  box-shadow: none;
+}
+
+.tm-btn.tm-small {
+  font-size: var(--font-ui-smaller);
+}
+
+.tm-btn.is-active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.tm-select {
+  font-size: var(--font-ui-smaller);
+  height: auto;
+}
+
+.tm-select.tm-view-select {
+  font-size: var(--font-ui-small);
+}
+
+.tm-body {
+  overflow-x: auto;
+}
+
+.tm-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Report opens a note in a new tab rather than switching the view: last in the bar, set apart, with an arrow */
+.tm-btn.tm-report-btn {
+  margin-left: var(--size-4-2);
+}
+.tm-btn.tm-report-btn::after {
+  content: ' \2197';
+}
+
+.tm-warnings {
+  margin-top: var(--size-4-2);
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+
+.tm-warnings summary {
+  cursor: pointer;
+  color: var(--text-warning);
+}
+
+.tm-errors {
+  border-left: 3px solid var(--text-error);
+  padding: var(--size-4-1) var(--size-4-3);
+  font-size: var(--font-ui-small);
+}
+
+.tm-errors-title {
+  color: var(--text-error);
+  font-weight: var(--font-semibold);
+}
+
+.tm-file {
+  padding: var(--size-4-4);
+}
+
+/* the .threat file editor: a transparent textarea over the highlighted text, with the same font, size and wrapping */
+.tm-source-wrap {
+  position: relative;
+  height: 100%;
+  min-height: 70vh;
+}
+.tm-source {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow: auto;
+}
+.tm-source-under {
+  color: var(--code-normal);
+  background: var(--code-background);
+  pointer-events: none;
+}
+.tm-source-over {
+  color: transparent;
+  background: transparent;
+  caret-color: var(--text-normal);
+  resize: none;
+}
+.tm-source-over::selection {
+  background: var(--text-selection);
+}
+
+/* syntax highlighting, from the theme's code colours (while editing, threat-source blocks, the .threat editor);
+   "span" covers both ways the editor can nest these marks with its own */
+.tm-hl-keyword, .tm-hl-keyword span { color: var(--code-keyword); }
+.tm-hl-def, .tm-hl-def span { color: var(--code-function); font-weight: var(--font-semibold); }
+.tm-hl-key, .tm-hl-key span { color: var(--code-property); }
+.tm-hl-string, .tm-hl-string span { color: var(--code-string); }
+.tm-hl-number, .tm-hl-number span { color: var(--code-value); }
+.tm-hl-comment, .tm-hl-comment span { color: var(--code-comment); font-style: italic; }
+.tm-hl-arrow, .tm-hl-arrow span { color: var(--code-operator); font-weight: var(--font-bold); }
+.tm-hl-punct, .tm-hl-punct span { color: var(--code-punctuation); }
+.tm-hl-threat-id, .tm-hl-threat-id span { color: var(--code-important); font-weight: var(--font-semibold); }
+.tm-hl-tag, .tm-hl-tag span { color: var(--code-tag); }
+/* the same colours as the boxed STRIDE letters and the risk colours in the diagrams */
+.tm-hl-stride-S, .tm-hl-stride-S span { color: var(--color-blue); font-weight: var(--font-bold); }
+.tm-hl-stride-T, .tm-hl-stride-T span { color: var(--color-orange); font-weight: var(--font-bold); }
+.tm-hl-stride-R, .tm-hl-stride-R span { color: var(--color-purple); font-weight: var(--font-bold); }
+.tm-hl-stride-I, .tm-hl-stride-I span { color: color-mix(in srgb, var(--color-yellow) 75%, var(--text-normal)); font-weight: var(--font-bold); }
+.tm-hl-stride-D, .tm-hl-stride-D span { color: var(--color-red); font-weight: var(--font-bold); }
+.tm-hl-stride-E, .tm-hl-stride-E span { color: color-mix(in srgb, var(--color-orange) 50%, var(--text-normal)); font-weight: var(--font-bold); }
+.tm-hl-risk-low, .tm-hl-risk-low span { color: var(--color-green); }
+.tm-hl-risk-medium, .tm-hl-risk-medium span { color: color-mix(in srgb, var(--color-yellow) 75%, var(--text-normal)); font-weight: var(--font-bold); }
+.tm-hl-risk-high, .tm-hl-risk-high span { color: var(--color-orange); font-weight: var(--font-bold); }
+.tm-hl-risk-critical, .tm-hl-risk-critical span { color: var(--color-red); font-weight: var(--font-bold); text-decoration: underline; }
+/* risks also get a tinted background, so #high isn't mistaken for the STRIDE letter of the same colour */
+[class*='tm-hl-risk-'] { background: color-mix(in srgb, currentColor 14%, transparent); border-radius: var(--radius-s); padding: 0 2px; }
+.tm-hl-closed, .tm-hl-closed span { color: var(--text-muted); font-style: italic; }
+.tm-hl-sensitive, .tm-hl-sensitive span { color: var(--code-important); font-weight: var(--font-bold); }
+
+/*
+ * Diagram colours. Obsidian 1.15 and later draw Mermaid with Pele, which takes colours from CSS; colours written
+ * into a diagram stay fixed whatever the theme. So the diagrams only name a class for each kind of node (and give
+ * risky flows an ID such as "tmcritical3"), and the colours are set here from the theme's own colours.
+ * Override any --tm-* variable in a CSS snippet to change them.
+ */
+.tm-block {
+  --tm-critical: var(--color-red);
+  --tm-high: var(--color-orange);
+  --tm-medium: var(--color-yellow);
+  --tm-low: var(--color-green);
+  --tm-boundary: var(--text-muted);
+  --tm-text: var(--text-normal);
+  /* C4: the further out, the stronger the blue */
+  --tm-c4-person: rgba(var(--color-blue-rgb), 0.55);
+  --tm-c4-system: rgba(var(--color-blue-rgb), 0.42);
+  --tm-c4-container: rgba(var(--color-blue-rgb), 0.28);
+  --tm-c4-component: rgba(var(--color-blue-rgb), 0.14);
+  --tm-c4-external: rgba(var(--mono-rgb-100), 0.14);
+  --tm-c4-border: var(--color-blue);
+  /* data flow */
+  --tm-dfd-external: rgba(var(--mono-rgb-100), 0.12);
+  --tm-dfd-external-border: var(--color-red);
+  --tm-dfd-process: rgba(var(--color-blue-rgb), 0.16);
+  --tm-dfd-process-border: var(--color-blue);
+  --tm-dfd-store: rgba(var(--color-red-rgb), 0.2);
+  --tm-dfd-store-border: var(--color-red);
+}
+
+.tm-block .pele-node.tmPerson > :not(text, .tm-icon) { fill: var(--tm-c4-person); stroke: var(--tm-c4-border); }
+.tm-block .pele-node.tmSystem > :not(text, .tm-icon) { fill: var(--tm-c4-system); stroke: var(--tm-c4-border); }
+.tm-block .pele-node.tmContainer > :not(text, .tm-icon),
+.tm-block .pele-node.tmStore > :not(text, .tm-icon) { fill: var(--tm-c4-container); stroke: var(--tm-c4-border); }
+.tm-block .pele-node.tmComponent > :not(text, .tm-icon) { fill: var(--tm-c4-component); stroke: var(--tm-c4-border); }
+.tm-block .pele-node.tmExternal > :not(text, .tm-icon) { fill: var(--tm-c4-external); stroke: var(--tm-boundary); }
+
+.tm-block .pele-node.tmExt > :not(text, .tm-icon) { fill: var(--tm-dfd-external); stroke: var(--tm-dfd-external-border); stroke-width: 2px; }
+.tm-block .pele-node.tmProc > :not(text, .tm-icon) { fill: var(--tm-dfd-process); stroke: var(--tm-dfd-process-border); }
+.tm-block .pele-node.tmData > :not(text, .tm-icon) { fill: var(--tm-dfd-store); stroke: var(--tm-dfd-store-border); }
+
+.tm-block .pele-node:is(.tmPerson, .tmSystem, .tmContainer, .tmStore, .tmComponent, .tmExternal, .tmExt, .tmProc, .tmData) text {
+  fill: var(--tm-text);
+}
+
+/* sequence notes: a plain background, so the tint around a note and the coloured risk word stand out */
+.tm-block .pele-note > rect { fill: var(--background-primary); }
+/* the risk word, told apart by its formatting (see src/sequence.js), coloured and slightly darkened for contrast */
+.tm-block .pele-note tspan[font-style='italic']:not([font-weight]):not([text-decoration]) { fill: color-mix(in srgb, var(--tm-low) 80%, var(--text-normal)); }
+.tm-block .pele-note tspan[font-weight]:not([font-style]):not([text-decoration]) { fill: color-mix(in srgb, var(--tm-medium) 75%, var(--text-normal)); }
+.tm-block .pele-note tspan[font-weight][text-decoration]:not([font-style]) { fill: color-mix(in srgb, var(--tm-high) 85%, var(--text-normal)); }
+.tm-block .pele-note tspan[font-weight][font-style][text-decoration] { fill: var(--tm-critical); }
+/* threat IDs on boxes, arrows and notes, coloured by risk once drawn (stride-colour.js) */
+/* (not only in threat blocks: saved reports colour their IDs from their register, so with the theme's colours as fallbacks) */
+svg tspan.tm-tid-low { fill: color-mix(in srgb, var(--tm-low, var(--color-green)) 80%, var(--text-normal)); }
+svg tspan.tm-tid-medium { fill: color-mix(in srgb, var(--tm-medium, var(--color-yellow)) 75%, var(--text-normal)); }
+svg tspan.tm-tid-high { fill: color-mix(in srgb, var(--tm-high, var(--color-orange)) 85%, var(--text-normal)); }
+svg tspan.tm-tid-critical { fill: var(--tm-critical, var(--color-red)); }
+/* closed (mitigated, accepted, transferred): grey and struck through */
+svg tspan.tm-tid-closed { fill: var(--text-muted); text-decoration: line-through; }
+
+/* the key under the Sequence and Data flow views */
+.tm-legend:empty { display: none; }
+.tm-legend {
+  margin-top: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.tm-legend-row { display: flex; flex-wrap: wrap; gap: var(--size-2-2) var(--size-4-3); }
+.tm-legend-label { font-weight: var(--font-semibold); }
+.tm-risk-low { font-style: italic; color: color-mix(in srgb, var(--tm-low) 80%, var(--text-normal)); }
+.tm-risk-medium { font-weight: var(--font-bold); color: color-mix(in srgb, var(--tm-medium) 75%, var(--text-normal)); }
+.tm-risk-high { font-weight: var(--font-bold); text-decoration: underline; color: color-mix(in srgb, var(--tm-high) 85%, var(--text-normal)); }
+.tm-risk-critical { font-weight: var(--font-bold); font-style: italic; text-decoration: underline; color: var(--tm-critical); }
+
+.tm-risk-colour-low { color: var(--tm-low); }
+.tm-risk-colour-medium { color: color-mix(in srgb, var(--tm-medium) 75%, var(--text-normal)); }
+.tm-risk-colour-high { color: var(--tm-high); }
+.tm-risk-colour-critical { color: var(--tm-critical); }
+.tm-risk-colour-low::before,
+.tm-risk-colour-medium::before,
+.tm-risk-colour-high::before,
+.tm-risk-colour-critical::before {
+  content: '';
+  display: inline-block;
+  width: 1.4em;
+  height: 0;
+  border-top: 2px solid currentColor;
+  vertical-align: middle;
+  margin-right: 0.3em;
+}
+
+/* zones (data flow) and system boxes (structure) */
+.tm-block .pele-cluster:not(.pele-box) > rect {
+  fill: none;
+  stroke: var(--tm-boundary);
+  stroke-width: 1.5px;
+  stroke-dasharray: 6 4;
+}
+
+/* flows coloured by their most serious open threat */
+.tm-block .pele-edge:is([data-id^='tmcritical'], [data-id^='tmhigh'], [data-id^='tmmedium'], [data-id^='tmlow']) { stroke-width: 2px; }
+.tm-block .pele-edge[data-id^='tmcritical'] { stroke: var(--tm-critical); }
+.tm-block .pele-edge[data-id^='tmhigh'] { stroke: var(--tm-high); }
+.tm-block .pele-edge[data-id^='tmmedium'] { stroke: var(--tm-medium); }
+.tm-block .pele-edge[data-id^='tmlow'] { stroke: var(--tm-low); }
+.tm-block .pele-edge[data-id^='tmcritical'] .pele-marker,
+.tm-block .pele-edge-label[data-id^='tmcritical'] text { fill: var(--tm-critical); }
+.tm-block .pele-edge[data-id^='tmhigh'] .pele-marker,
+.tm-block .pele-edge-label[data-id^='tmhigh'] text { fill: var(--tm-high); }
+.tm-block .pele-edge[data-id^='tmmedium'] .pele-marker,
+.tm-block .pele-edge-label[data-id^='tmmedium'] text { fill: var(--tm-medium); }
+.tm-block .pele-edge[data-id^='tmlow'] .pele-marker,
+.tm-block .pele-edge-label[data-id^='tmlow'] text { fill: var(--tm-low); }
+
+/* Structure view with the threat overlay: a box's outline in the colour of its most serious open threat
+   (after the kind colours above, so it wins). Arrows use the edge rules above, by their "tm<risk>" IDs. */
+.tm-block .pele-node.tmRiskCritical > :not(text, .tm-icon) { stroke: var(--tm-critical); stroke-width: 3px; }
+.tm-block .pele-node.tmRiskHigh > :not(text, .tm-icon) { stroke: var(--tm-high); stroke-width: 3px; }
+.tm-block .pele-node.tmRiskMedium > :not(text, .tm-icon) { stroke: var(--tm-medium); stroke-width: 3px; }
+.tm-block .pele-node.tmRiskLow > :not(text, .tm-icon) { stroke: var(--tm-low); stroke-width: 3px; }
+
+/* the switches in the bar (Threats, Compact) look like buttons that stay pressed */
+.tm-btn.tm-toggle:not(.is-active) { opacity: 0.7; }
+
+/* the table of the threats a view shows */
+.tm-table:empty { display: none; }
+.tm-threats { margin-top: var(--size-4-2); font-size: var(--font-ui-small); }
+.tm-threats summary { cursor: pointer; color: var(--text-muted); font-weight: var(--font-semibold); }
+.tm-threat-table { width: 100%; border-collapse: collapse; margin-top: var(--size-2-2); }
+.tm-threat-table th,
+.tm-threat-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--size-2-1) var(--size-4-1);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-threat-table th { color: var(--text-muted); font-weight: var(--font-semibold); }
+.tm-threat-table .tm-threat-id { font-family: var(--font-monospace); white-space: nowrap; }
+.tm-threat-table .tm-nowrap { white-space: nowrap; }
+.tm-threat-table tr.tm-closed td { color: var(--text-muted); }
+.tm-threat-table .tm-control { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+
+/* the C4 part of the Structure key: chips in the same colours as the boxes */
+.tm-key-chip { padding: 0 var(--size-4-1); border-radius: var(--radius-s); border: 1px solid var(--tm-c4-border); color: var(--tm-text); }
+.tm-key-person { background: var(--tm-c4-person); }
+.tm-key-system { background: var(--tm-c4-system); }
+.tm-key-container,
+.tm-key-store { background: var(--tm-c4-container); }
+.tm-key-component { background: var(--tm-c4-component); }
+.tm-key-external { background: var(--tm-c4-external); border-color: var(--tm-boundary); }
+.tm-key-store { border-radius: 0.8em; }
+.tm-key-box { border: 1.5px dashed var(--tm-boundary); }
+
+/* STRIDE letters in their colours: boxed letters in diagrams (SVG, coloured by fill, see stride-colour.js), and
+   chips in tables, keys and saved reports (HTML). Not limited to .tm-block, so saved reports get them too. */
+.tm-sg { font-size: 1.15em; }
+.tm-sg-S { fill: var(--color-blue); }
+.tm-sg-T { fill: var(--color-orange); }
+.tm-sg-R { fill: var(--color-purple); }
+.tm-sg-I { fill: var(--color-yellow); }
+.tm-sg-D { fill: var(--color-red); }
+.tm-sg-E { fill: color-mix(in srgb, var(--color-orange) 50%, var(--text-normal)); }
+.tm-chip {
+  display: inline-block;
+  min-width: 1.35em;
+  margin-right: 0.15em;
+  padding: 0 0.2em;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 0.85em;
+  font-weight: var(--font-bold);
+  line-height: 1.35;
+  color: #fff;
+}
+.tm-chip-S { background: var(--color-blue); }
+.tm-chip-T { background: var(--color-orange); }
+.tm-chip-R { background: var(--color-purple); }
+.tm-chip-I { background: var(--color-yellow); color: #000; }
+.tm-chip-D { background: var(--color-red); }
+.tm-chip-E { background: color-mix(in srgb, var(--color-orange) 50%, var(--text-normal)); }
+
+/* icons on boxes (icon-draw.js): a name Obsidian has no icon for shows a "?" with a tooltip */
+.tm-icon-missing {
+  fill: var(--text-error);
+  font-weight: var(--font-bold);
+}
+
+/* threat IDs on diagrams are links (id-links.js); a table row they point to flashes */
+.tm-tid[data-tm-id] { cursor: pointer; }
+.tm-tid[data-tm-id]:hover { text-decoration: underline; }
+@keyframes tm-flash { from { background-color: var(--text-highlight-bg); } to { background-color: transparent; } }
+.tm-threat-table tr.tm-flash td { animation: tm-flash 1.8s ease-out; }
+
+/* the report's risk matrix (risk-matrix.js): each cell shaded by the risk its likelihood × impact gives */
+.tm-cell { display: block; padding: var(--size-2-1) var(--size-2-2); border-radius: var(--radius-s); min-height: 1.6em; }
+.tm-cell-low { background-color: color-mix(in srgb, var(--tm-low, var(--color-green)) 22%, transparent); }
+.tm-cell-medium { background-color: color-mix(in srgb, var(--tm-medium, var(--color-yellow)) 28%, transparent); }
+.tm-cell-high { background-color: color-mix(in srgb, var(--tm-high, var(--color-orange)) 30%, transparent); }
+.tm-cell-critical { background-color: color-mix(in srgb, var(--tm-critical, var(--color-red)) 34%, transparent); }
+
+/* a threat's footprint (id-links.js): where it applies stays, the rest of the diagram fades */
+.tm-block svg.tm-focus :is(.pele-node, .pele-edge, .pele-edge-label, .pele-note, .pele-cluster):not(.tm-hit) { opacity: 0.18; }
+.tm-block svg.tm-focus :is(.pele-node, .pele-edge, .pele-edge-label, .pele-note, .pele-cluster) { transition: opacity 0.2s ease; }
+.tm-block svg.tm-focus .pele-node.tm-hit > :not(text, .tm-icon) { stroke: var(--interactive-accent); stroke-width: 3px; }
+
+/* findings from the model (rules.js) under the table, and the key's dashed arrow */
+.tm-findings summary { cursor: pointer; color: var(--text-muted); font-weight: var(--font-semibold); }
+.tm-findings ul { margin: var(--size-2-2) 0; }
+.tm-legend-dashed::before { content: ''; display: inline-block; width: 2em; margin-right: var(--size-2-2); vertical-align: middle; border-top: 2px dashed var(--text-muted); }
+
+/* the Status column: open in its risk colour, each closed status in its own; then an open threat's control progress */
+.tm-status { display: inline-block; padding: 0 var(--size-2-2); border-radius: var(--radius-s); font-size: var(--font-ui-smaller); font-weight: var(--font-semibold); color: var(--text-on-accent); background-color: var(--text-muted); }
+.tm-status-open.tm-status-critical { background-color: var(--tm-critical); }
+.tm-status-open.tm-status-high { background-color: var(--tm-high); }
+.tm-status-open.tm-status-medium { background-color: color-mix(in srgb, var(--tm-medium) 80%, black); }
+.tm-status-open.tm-status-low { background-color: var(--tm-low); }
+.tm-status-mitigated { background-color: var(--color-green); }
+.tm-status-accepted { background-color: color-mix(in srgb, var(--color-yellow) 75%, black); }
+.tm-status-transferred { background-color: var(--color-blue); }
+.tm-status { white-space: nowrap; }
+.tm-status-progress { color: var(--text-muted); font-size: var(--font-ui-smaller); margin-top: var(--size-2-1); line-height: 1.3; }
+.tm-legend-closed { text-decoration: line-through; color: var(--text-muted); font-family: var(--font-monospace); }

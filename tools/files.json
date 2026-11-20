@@ -1,0 +1,40 @@
+{
+  "header": "src/_header.js",
+  "manifest": "src/manifest.json",
+  "main": "ThreatModelPlugin",
+  "js": [
+    "src/imports.js",
+    "src/lex.js",
+    "src/tags.js",
+    "src/icons.js",
+    "src/cvss.js",
+    "src/risk.js",
+    "src/parse.js",
+    "src/model.js",
+    "src/controls.js",
+    "src/rules.js",
+    "src/highlight.js",
+    "src/mermaid.js",
+    "src/structure.js",
+    "src/sequence.js",
+    "src/dataflow.js",
+    "src/report.js",
+    "src/report-summary.js",
+    "src/risk-matrix.js",
+    "src/threat-table.js",
+    "src/plugin.js",
+    "src/block.js",
+    "src/legend.js",
+    "src/file-view.js",
+    "src/highlight-editor.js",
+    "src/stride-colour.js",
+    "src/id-links.js",
+    "src/icon-draw.js",
+    "src/diagram-editor.js",
+    "src/report-note.js",
+    "src/settings.js"
+  ],
+  "css": [
+    "src/styles.css"
+  ]
+}

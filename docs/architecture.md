@@ -1,0 +1,64 @@
+# Architecture
+
+```mermaid
+flowchart LR
+  src["threat block or .threat file"] --> lex["lex.js<br/>tokens"] --> parse["parse.js<br/>raw model"] --> model["model.js<br/>model, errors, warnings"]
+  model --> structure["structure.js<br/>Mermaid flowchart (C4)"]
+  model --> sequence["sequence.js<br/>Mermaid sequence"]
+  model --> dataflow["dataflow.js<br/>Mermaid flowchart (DFD)"]
+  model --> report["report.js<br/>Markdown"]
+  structure & sequence & dataflow --> block["block.js<br/>TmBlock"] --> md["Obsidian MarkdownRenderer"]
+  report --> note["report-note.js<br/>new note, new tab"]
+```
+
+## Three layers
+
+1. **The language** (`lex.js`, `parse.js`, `model.js`, `controls.js`, `risk.js`, `rules.js`, `tags.js`, `cvss.js`, `icons.js`) turns text into a plain model. No Obsidian, no DOM. `tmBuildModel(source)` returns `{ model, errors, warnings }`; errors and warnings carry the line they refer to (line 1 is the first line inside the code block).
+2. **The views** (`structure.js`, `sequence.js`, `dataflow.js`, `report.js`) turn the model into text: Mermaid for the three diagrams, Markdown for the report. They are pure functions, so the tests check their output directly.
+3. **Obsidian** (`plugin.js`, `block.js`, `file-view.js`, `report-note.js`, `settings.js`). `TmBlock` is a `MarkdownRenderChild`: it builds the model, draws the bar (a list of views, the level or scenario list, the switches and the Report button), and renders the chosen diagram by handing Obsidian's `MarkdownRenderer` a `mermaid` code block. Obsidian's Mermaid renderer (Pele, since Obsidian 1.15) draws it, in the current theme. The report is never shown in the block: its button saves it as a note and opens it in a new tab. Each render gets its own child `Component`, removed before the next, so nothing leaks when the view changes.
+
+## The model
+
+```text
+model
+  title, description, defaultView, level, scenarioId
+  elements[]  id, kind, role (external | process | store), title, description, technology, link, tags,
+              extra (other attributes), parent, children[], zone, threats[], line
+  zones[]     id, title, trust, description, tags, parent, threats[], line
+  flows[]     n (1, 2, …), from, to, label, protocol, description, data[{ text, tags }], tags,
+              threats[], crosses (zones differ), sensitive (#secret, #pii or #confidential data),
+              encrypted, authenticated (true, false or null), line
+  threats[]   id, title, tags, stride[], risk, method (rating | tag | cvss | score), likelihood, impact, rating,
+              residual, residualLikelihood, residualImpact, residualRating, status, score, cvss, controls[],
+              controlled, mitigation, description, owner,
+              target { type: flow | element | zone | model }, where (text for the report), line
+  scenarios[] id, title, steps[{ from, to, label, flow (n or null), line }], line
+  controls[]  id, title, tags, status (planned | implemented | verified), owner, due, description, covers[], line
+  findings[]  rule, risk, message, flow (n)
+  meta        version, author, owner, status, reviewDate, scope, outOfScope[], assumptions[]
+```
+
+Two hierarchies are kept apart on purpose: `parent` (what an element is part of: drawn by the Structure view) and `zone` (where it runs: drawn by the Data flow and Sequence views). An element's zone is its own `zone =`, else the zone block it is written in, else its parent's.
+
+## Decisions
+
+- **Threats on the Structure view.** The overlay is part of `tmStructure`: a box gets the threats of everything hidden inside it at the current level (and of flows that start and end inside it), so the Context level still shows every threat somewhere. Boxes get a second class, `tmRisk<Risk>`, for their outline; arrows an ID starting `tm<risk>`, as in the Data flow view. `tmViewThreats` (threat-table.js) decides which threats each view's table lists; the key is `legend.js`.
+- **A threat in several places** (`on`): the model keeps every place in `threat.targets` and adds the threat to each element's, zone's and flow's list; `threat.target` is the first, for code that needs one.
+
+- **Syntax highlighting** (`highlight.js`) has its own small tokenizer rather than reusing the lexer: the lexer stops at the first mistake, but text being typed is full of them (an open string, half a keyword). It returns classed ranges, which three places turn into colour: a CodeMirror `ViewPlugin` with mark decorations for ```` ```threat ```` and ```` ```threat-source ```` blocks in the note editor, a Markdown post-processor for `threat-source` blocks in Reading view, and the `.threat` file editor, which is a textarea with transparent text over a highlighted `<pre>` (Obsidian has no public API for a CodeMirror editor in a custom view). The colours are the theme's `--code-*` variables.
+
+- **Links to threats in a report.** Obsidian can't link to one row of a table, so the register is a list: each threat is a list item ending in a block ID (`^t01`), and every other mention is a link to it (`[[#^t01|T01]]`), which Page preview shows on hover. Threats without an ID get `^threat-<n>`.
+- **The report is always a note** (`report-note.js`): an ordinary note, so Obsidian can print it or export it to PDF. Its diagrams are written with `{ portable: true }`: the report note is outside a `.tm-block`, so `styles.css` doesn't reach it, and fixed colours print the same in any theme. Reports go in a `Reports` folder beside the model's note unless a folder is chosen. A new report never replaces a note; it is numbered instead.
+
+- **Mermaid only.** Obsidian ships a Mermaid renderer, so there is nothing to bundle and it works on mobile. The cost: less control over layout than Graphviz gave the old DataFlow tool (no ranking of external entities above processes above stores).
+- **Pele, and colours from CSS.** Since 1.15, Obsidian draws Mermaid with [Pele](https://pele.run/), which themes diagrams with CSS variables; colours written into a diagram (`classDef`, `style`, `linkStyle`) stay fixed in light and dark mode. So the diagrams drawn in Obsidian only *name* things: a class per kind of node (`tmProc`, `tmContainer`…, which Pele puts on the node's `<g>`), and an edge ID that starts with the risk (`e4 tmcritical2@--> e5`, which Pele keeps as `data-id`). `styles.css` colours them from the theme's own colours through `--tm-*` variables. Zone and system boxes are styled through `.pele-cluster`. The sequence diagram's risk tints (`rect`) have no class to hang CSS on, so they stay written in, as see-through colours that work on any background.
+- **Threat IDs as links.** `stride-colour.js` marks each known threat ID on a diagram (`data-tm-id`) and listens for clicks and hovers on the block or note section. In a threat block the IDs come from the model (`tmThreatIdInfo`, with a tooltip) and a click shows the threat's footprint (`tmShowFootprint`: the boxes, arrows and notes carrying its ID get `tm-hit`, the diagram `tm-focus`, and styles.css fades the rest) and brings the table row into view. In a saved report they come from its own threat register, read back from the note's text (`tmRegisterIndex`, which must match how `tmRegisterItem` writes it), and a click opens the register entry and a hover shows it through Obsidian's page preview. `id-links.js` holds both.
+- **Findings.** `rules.js` works out whether each flow is encrypted (`encrypted`, else its protocol) and reads `authenticated`; `tmFindings` then applies a few fixed rules to the model's own facts and `tmBuildModel` stores the result as `model.findings`. The block lists them (`tmFindingsInto`), the report has a section for them, and the Structure and Data flow views draw unencrypted flows dashed (`-.->`).
+- **Icons.** Pele draws no icons in labels, and Mermaid's icon shapes come out empty, as Obsidian gives Pele no icons. So `icons.js` turns `icon = "user"` into an empty first line in the node's label and class names on the node (`tmIcon_user`, `tmIconFg_x08427b`, `tmIconBg_white`; a `-` in a name becomes `_`, hex colours start with `x`, and each class gets a `classDef` that changes nothing so the class is kept), and once the diagram is drawn `icon-draw.js` puts Obsidian's own icon (`getIcon`) in that line, with `stride-colour.js`'s colouring, for blocks and for saved reports alike; that watches the block (or note section) with a `MutationObserver` for as long as it is shown, because Obsidian may draw a diagram only once it is scrolled into view, and may draw it again. In Live Preview Obsidian runs no post-processors on a note's own diagrams (a saved report's, say), so an editor extension (`diagram-editor.js`) watches the editor in the same way. Nothing is fetched. `tools/doc-images.mjs` draws the same icons from `lucide-static` when it is installed.
+- **No notes over one participant.** Obsidian wraps sequence diagram text and ignores an `init` directive turning that off, so a note over one participant is squeezed to that participant's width. An element's own threats therefore go in a note across the step where it first appears (or across it and its neighbour), headed "On <element>:".
+- **Coloured STRIDE letters.** Pele can't colour part of a label, so STRIDE letters are written as Unicode's boxed capitals (🆂 🆃 🆁 🅸 🅳 🅴: a filled box with the letter cut out). An SVG glyph takes its fill colour, so once a diagram is drawn `stride-colour.js` wraps each in a `<tspan class="tm-sg tm-sg-S">` and `styles.css` colours it from the theme: a coloured box with the letter in it. It runs for blocks after they render and, from a post-processor, for any note's diagrams (saved reports). Elsewhere (other Mermaid tools) they stay boxed letters in the text colour; the pictures in `docs/` get their colours written in. Tables and keys use HTML chips (`.tm-chip-S`). In the Sequence view, the risk word of an open threat is formatted more loudly as the risk rises (`<i>`, `<b>`, `<b><u>`, `<b><i><u>` in capitals), and `styles.css` colours each of those formattings, which Pele writes as `font-weight`, `font-style` and `text-decoration` on the `<tspan>`; only the risk word is ever formatted in a note. Threat IDs on boxes and arrows (`tmThreatMarks`, `tmThreatIdsText` in mermaid.js) get the same formatting by their risk (`tmRiskStyled`), at most four per label, and in a block `stride-colour.js` also wraps each known ID in a `<tspan class="tm-tid tm-tid-high">` (from `tmThreatIdClasses`) for its colour; a saved report has no model to hand, so its IDs keep only the formatting. The `rect` tint behind a note is fixed but see-through, stronger for higher risks.
+- **Fixed colours for reports.** `tmStructure` and `tmDataflow` take `{ portable: true }` to write the colours into the diagram instead (`classDef` fills, `linkStyle`, no edge IDs). Saved reports use it, because they are ordinary notes outside a `.tm-block`, where `styles.css` doesn't reach; it also keeps their diagrams readable in any Mermaid tool.
+- **Pele's labels** support line breaks, bold, italic, `<sub>` and `<sup>`, and Mermaid's entity codes; other HTML is dropped. That is why `tmMmText` keeps only those four tags. Edge IDs need Obsidian 1.15 (`minAppVersion`).
+- **Mermaid IDs are generated** (`e1`, `z1`): model IDs may contain `-`, which Mermaid reads as part of an arrow.
+- **The view each block shows is remembered** per note and model title while Obsidian runs, so editing a note doesn't send the block back to its first view.
+- **STRIDE coverage gaps** use STRIDE per element: external entities S, R; processes S, T, R, I, D, E; data stores T, I, D; flows T, I, D. Only flows that cross a zone boundary, and processes that receive one, are checked, to keep the list short enough to act on.

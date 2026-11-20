@@ -1,0 +1,21 @@
+# build output and local files
+dist/
+node_modules/
+data.json
+
+# sample vault: keep its notes and plugin settings, not the build or Obsidian's own files
+!/sample vault/.obsidian/plugins/threat-model/data.json
+/sample vault/.obsidian/plugins/threat-model/main.js
+/sample vault/.obsidian/plugins/threat-model/styles.css
+/sample vault/.obsidian/plugins/threat-model/manifest.json
+/sample vault/.obsidian/workspace*.json
+/sample vault/.obsidian/app.json
+/sample vault/.obsidian/appearance.json
+/sample vault/.obsidian/core-plugins*.json
+/sample vault/.obsidian/graph.json
+/sample vault/.trash/
+
+# reports made while trying the plugin (the Report button saves them in a Reports folder beside the model's note)
+/sample vault/**/Reports/
+/sample vault/**/* threat report.md
+/sample vault/**/* threat report [0-9]*.md

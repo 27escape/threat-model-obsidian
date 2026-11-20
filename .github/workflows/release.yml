@@ -1,0 +1,53 @@
+name: Release
+
+# Push a tag that matches the manifest version (for example 0.1.0, no "v") to build, test and
+# draft a GitHub release with main.js, manifest.json and styles.css, the only files Obsidian
+# installs. Each file gets a build attestation, so anyone can check it was built from this repo.
+# Started by tools/release.sh, which then publishes the draft.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build
+        run: node tools/build.mjs
+      - name: Plugin id, name and version
+        id: m
+        run: |
+          echo "id=$(node -p "require('./manifest.json').id")" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p "require('./manifest.json').name")" >> "$GITHUB_OUTPUT"
+          v=$(node -p "require('./manifest.json').version")
+          if [ "$v" != "${GITHUB_REF_NAME}" ]; then echo "Tag ${GITHUB_REF_NAME} does not match manifest version $v"; exit 1; fi
+      - name: Tests and checks
+        run: |
+          node --test test/*.test.mjs
+          node tools/check.mjs dist
+      - name: Attest the release files
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/${{ steps.m.outputs.id }}/main.js
+            dist/${{ steps.m.outputs.id }}/manifest.json
+            dist/${{ steps.m.outputs.id }}/styles.css
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          d="dist/${{ steps.m.outputs.id }}"
+          notes="docs/release-notes/${GITHUB_REF_NAME}.md"
+          [ -f "$notes" ] || notes=/dev/null
+          gh release create "${GITHUB_REF_NAME}" --draft --title "${{ steps.m.outputs.name }} ${GITHUB_REF_NAME}" --notes-file "$notes" \
+            "$d/main.js" "$d/manifest.json" "$d/styles.css"

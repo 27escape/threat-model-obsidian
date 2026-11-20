@@ -1,0 +1,66 @@
+// A .threat file: open it to see the model; the pencil button at the top shows the text to edit.
+title = "Online shop"
+description = `An online shop with a payment provider. Open the Structure view at the
+Component level to see inside the Orders service.`
+level = "context"
+
+zone internet "Internet" { trust = "untrusted" }
+zone cloud "Cloud account" { trust = "restricted" }
+
+person shopper "Shopper" { icon = "user"  zone = internet }
+person staff "Warehouse staff" { icon = "users"  zone = internet }
+external payments "Payment provider" #third-party #pci { icon = "credit-card"  zone = internet }
+
+system shop "Online shop" {
+  description = "Sells things and takes payment"
+  zone = cloud
+
+  container storefront "Storefront" { icon = "store"  technology = "Next.js" }
+
+  container orders "Orders service" {
+    icon = "boxes"
+    technology = "Java"
+    component basket "Basket" { icon = "shopping-basket" }
+    component checkout "Checkout" { icon = "shopping-cart" }
+    component fulfilment "Fulfilment" { icon = "package" }
+  }
+
+  store ordersdb "Orders database" { icon = "database"  technology = "PostgreSQL" }
+  queue events "Order events" { icon = "list-ordered"  technology = "Kafka" }
+}
+
+shopper -> storefront "Browses and buys" { protocol = "HTTPS"  data = ["Address #pii", "Basket"] }
+storefront -> basket "Updates the basket" { protocol = "HTTPS" }
+storefront -> checkout "Checks out" {
+  protocol = "HTTPS"
+  data = ["Address #pii", "Payment token #secret"]
+  threat SHOP-01 "Price changed in the browser before checkout" #T #high
+}
+checkout -> payments "Takes payment" {
+  protocol = "HTTPS"
+  data = ["Payment token #secret", "Amount"]
+  threat SHOP-02 "Payment callback forged to mark an order paid" #S #T {
+    cvss = "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+    mitigation = "Verify the provider's signature on every callback"
+  }
+}
+checkout -> ordersdb "Saves the order" { data = ["Order #pii"]  encrypted = false }
+checkout -> events "Order placed" { encrypted = false }
+events -> fulfilment "Order placed" { encrypted = false }
+fulfilment -> staff "Pick list" { protocol = "HTTPS"  data = ["Address #pii"] }
+
+// one threat, several places
+threat SHOP-03 "Order data travels unencrypted inside the cloud account" #TI #medium {
+  on = [checkout -> ordersdb, checkout -> events, events -> fulfilment]
+  mitigation = "Turn on TLS for PostgreSQL and Kafka"
+}
+
+scenario buy "Shopper buys something" {
+  shopper -> storefront
+  storefront -> checkout
+  checkout -> payments
+  checkout -> ordersdb
+  checkout -> events
+  events -> fulfilment
+  fulfilment -> staff
+}
