@@ -1,0 +1,236 @@
+/* The web app's overlays and extras: dialog heads, the top bar's menus, the text's line numbers, the problems
+   badge, full screen, the report and help documents, scenario steps, and printing the report. */
+
+/* ---- dialogs: a head with the title, any tools, and the close button */
+.tw-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+  margin-bottom: var(--size-4-3);
+}
+.tw-dialog .tw-dialog-head h2 {
+  margin: 0;
+}
+.tw-dialog-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tw-dialog-wide {
+  width: min(1100px, 94vw);
+  max-width: 94vw;
+  height: 90vh;
+  padding: 0;
+}
+.tw-dialog-wide[open] {
+  display: flex;
+  flex-direction: column;
+}
+.tw-dialog-wide .tw-dialog-head {
+  margin: 0;
+  padding: var(--size-4-3) var(--size-4-4);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.tw-dialog-wide .tw-dialog-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--size-4-3) var(--size-4-6) var(--size-4-6);
+}
+.tw-copy-box {
+  width: 100%;
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+}
+
+/* ---- the top bar's small menus (Add, Model) */
+.tw-dropdown {
+  position: relative;
+}
+.tw-dropdown .tw-chevron {
+  margin-left: 4px;
+  width: 13px;
+  height: 13px;
+}
+.tw-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+  min-width: 230px;
+  padding: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+.tw-dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  border-radius: var(--radius-s);
+  white-space: nowrap;
+}
+.tw-dropdown-menu button:hover,
+.tw-dropdown-menu button:focus-visible {
+  background: var(--background-modifier-hover);
+}
+.tw-dropdown-menu button .svg-icon {
+  color: var(--text-muted);
+}
+.tw-dropdown-menu button .svg-icon + span {
+  margin-left: 0;
+}
+.tw-dropdown-line {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--background-modifier-border);
+}
+
+/* ---- problems badge, full screen */
+.tw-problems {
+  color: rgb(var(--color-orange-rgb));
+}
+.tw-problems.is-error {
+  color: var(--text-error);
+}
+.tw-problems span {
+  font-weight: var(--font-bold);
+}
+.tw-view {
+  position: relative;
+}
+.tw-view:fullscreen {
+  background: var(--background-primary);
+  overflow: auto;
+  padding: var(--size-4-4);
+}
+.tm-errors li,
+.tm-warnings li {
+  cursor: pointer;
+}
+.tm-errors li:hover,
+.tm-warnings li:hover {
+  text-decoration: underline;
+}
+
+/* ---- the text, with line numbers: lines don't wrap, so the numbers stay level */
+.tw-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+.tw-gutter {
+  flex: none;
+  margin: 0;
+  padding: var(--size-4-2) 6px var(--size-4-2) 8px;
+  min-width: 3.2em;
+  text-align: right;
+  overflow: hidden;
+  font-family: var(--font-monospace);
+  font-size: var(--code-size);
+  line-height: 1.5;
+  color: var(--text-faint);
+  background: var(--background-secondary);
+  border-right: 1px solid var(--background-modifier-border);
+  user-select: none;
+}
+.tw-editor .tm-source-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+}
+.tw-editor .tm-source {
+  border: none;
+  border-radius: 0;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow: auto;
+}
+.tw-editor .tm-source-under {
+  overflow: hidden;
+}
+.tw-editor.tw-flash {
+  animation: tw-flash 1.2s ease-out;
+}
+@keyframes tw-flash {
+  from {
+    box-shadow: 0 0 0 3px var(--interactive-accent);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* ---- the panel's extras */
+.tw-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--size-4-2) 0;
+}
+.tw-panel-row button,
+.tw-small {
+  padding: 2px 8px;
+  font-size: var(--font-ui-smaller);
+}
+.tw-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tw-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tw-step select {
+  flex: 1;
+  min-width: 0;
+}
+.tw-step button {
+  padding: 2px 5px;
+}
+.tw-step-n {
+  min-width: 1.6em;
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.tw-problem-error .tm-threat-id {
+  color: var(--text-error);
+}
+.tw-problem-warning .tm-threat-id {
+  color: rgb(var(--color-orange-rgb));
+}
+
+/* ---- earlier versions */
+.tw-versions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tw-versions li {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.tw-versions .tw-help {
+  margin: 0 auto 0 0;
+}
+.tw-version-when {
+  font-variant-numeric: tabular-nums;
+}

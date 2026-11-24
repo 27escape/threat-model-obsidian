@@ -136,6 +136,7 @@ class Notice {
     if (!box) box = document.body.createDiv({ cls: 'tw-notices' });
     // the plugin's report message names a note in the vault; in the page the report is a download
     const saved = /^Saved the report as (?:.*\/)?(.+)$/.exec(message);
+    if (saved && twApp.onReport) return; // the page shows the report itself
     if (saved) message = `Downloaded the report: ${saved[1]}`;
     const n = box.createDiv({ cls: 'tw-notice', text: message });
     n.setAttr('role', 'status');
@@ -194,12 +195,14 @@ function twDownload(name, text, type = 'text/markdown') {
 }
 
 const twApp = {
+  onReport: null, // set by the page: what to do with a report instead of saving it as a note
   vault: {
     getAbstractFileByPath: () => null,
     createFolder: async () => {},
     create: async (path, text) => {
       const name = path.slice(path.lastIndexOf('/') + 1);
-      twDownload(name, text);
+      if (twApp.onReport) twApp.onReport(name, text); // the page shows it (report-view.js)
+      else twDownload(name, text);
       return { path: name };
     },
   },

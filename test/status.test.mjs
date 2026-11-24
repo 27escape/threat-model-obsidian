@@ -29,7 +29,7 @@ test('closed threats colour nothing: a box or arrow takes its colour from open t
   const s = tmStructure(m, 'container');
   assert.doesNotMatch(s, /class e1 tmRisk/); // a: only a mitigated threat
   assert.doesNotMatch(s, /tmhighs\d+@/); // a -> b: only an accepted one
-  assert.match(s, /e2 tmlows\d+@-->/); // b -> a: the open low one, not the transferred critical one
+  assert.match(s, /e2 tmlows\d+(?:f\d+)+@-->/); // b -> a: the open low one, not the transferred critical one
   const d = tmDataflow(m);
   assert.match(d, /tmlow2@/);
   assert.doesNotMatch(d, /tmhigh1@|tmcritical/);

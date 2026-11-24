@@ -40,8 +40,13 @@ const examples = o.examples.map((f) => {
   return { name: path.basename(f).replace(/\.(md|threat)$/, ''), text: body };
 });
 
+// the language reference, for Help: without its pictures (the page loads nothing) and with links to other docs made absolute
+const language = read('docs/language.md')
+  .replace(/^!\[[^\]]*\]\([^)]*\)\s*$/gm, '')
+  .replace(/\]\((?!https?:|#)([^)]+)\)/g, (m, to) => `](https://github.com/27escape/threat-model-obsidian/blob/main/docs/${to})`);
+
 const app = ["'use strict';", ...o.js.map((f) => `/* @src ${f} */\n${read(f)}`)].join('\n');
-const data = `const TW_LUCIDE = ${JSON.stringify(lucide)};\nconst TW_LUCIDE_ALIASES = ${JSON.stringify(aliases)};\nconst TW_EXAMPLES = ${JSON.stringify(examples, null, 1)};`;
+const data = `const TW_LUCIDE = ${JSON.stringify(lucide)};\nconst TW_LUCIDE_ALIASES = ${JSON.stringify(aliases)};\nconst TW_EXAMPLES = ${JSON.stringify(examples, null, 1)};\nconst TW_LANGUAGE = ${JSON.stringify(language)};`;
 const css = o.css.map((f) => `/* @src ${f} */\n${read(f)}`).join('\n');
 const manifest = JSON.parse(read('src/manifest.json'));
 

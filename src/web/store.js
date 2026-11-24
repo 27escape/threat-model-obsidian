@@ -1,5 +1,7 @@
 // The user's own models, kept in this browser's local storage under one key, with a version number so the format
-// can change later without losing anything: { version: 1, models: { "<name>": { text, updated } } }. Plus the model
+// can change later without losing anything: { version: 1, models: { "<name>": { text, updated, versions } } }, where
+// versions are earlier texts kept as they are saved over ([{ text, at }], newest first, at most one every ten minutes
+// and the last ten). Plus the model
 // that was open last. Storage can be missing, full or switched off (some browsers, private windows, pages opened from
 // disk): every call copes, and says so, rather than failing.
 
@@ -7,6 +9,8 @@ const TW_STORE_KEY = 'threat-modelling:models';
 const TW_LAST_KEY = 'threat-modelling:last';
 const TW_PREFS_KEY = 'threat-modelling:ui'; // how the page is laid out, such as whether the text is shown
 const TW_NAME_MAX = 80;
+const TW_VERSIONS_MAX = 10;
+const TW_VERSION_EVERY = 10 * 60 * 1000; // ms
 
 class TwStore {
   constructor(storage) {
@@ -88,8 +92,35 @@ class TwStore {
   }
 
   save(name, text) {
-    this.data.models[name] = { text, updated: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const was = this.data.models[name];
+    const versions = (was && was.versions) || [];
+    // what is saved over is kept as an earlier version, at most one every ten minutes
+    if (was && was.text !== text && (!versions.length || Date.parse(now) - Date.parse(versions[0].at) >= TW_VERSION_EVERY)) this.addVersion(versions, was.text, was.updated || now);
+    this.data.models[name] = { text, updated: now, versions };
     return this.write();
+  }
+
+  addVersion(versions, text, at) {
+    if (versions.length && versions[0].text === text) return;
+    versions.unshift({ text, at });
+    versions.length = Math.min(versions.length, TW_VERSIONS_MAX);
+  }
+
+  /** Keep the model as it is now as a version (when leaving it), unless the newest version is the same. */
+  keepVersion(name) {
+    const m = this.data.models[name];
+    if (!m) return;
+    m.versions = m.versions || [];
+    const before = m.versions.length && m.versions[0].text;
+    this.addVersion(m.versions, m.text, m.updated || new Date().toISOString());
+    if (m.versions[0].text !== before) this.write();
+  }
+
+  /** Earlier versions of a model, newest first: [{ text, at }]. */
+  versions(name) {
+    const m = this.data.models[name];
+    return (m && m.versions) || [];
   }
 
   rename(from, to) {

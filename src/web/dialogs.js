@@ -1,11 +1,19 @@
-// The web app's dialogs: asking for a name, confirming a deletion, and About. Built with <dialog>, as plain DOM
-// (no HTML strings). Each returns a promise that settles when the dialog closes.
+// The web app's dialogs: asking for a name, confirming a deletion, and About; the report, help and earlier versions
+// use twDialog too. Built with <dialog>, as plain DOM (no HTML strings). Each returns a promise that settles when the
+// dialog closes, by its buttons, its close button, Escape or a click outside it.
 
-/** A dialog with a heading; fill(body, close) adds its content. Resolves with what close() was given. */
-function twDialog(title, fill) {
+/**
+ * A dialog with a heading; fill(body, close, dialog) adds its content. Resolves with what close() was given. Like
+ * every overlay on the page, it closes with Escape (resolving undefined) or a click outside it (on the dim backdrop).
+ * o.wide: a large dialog (the report, help); o.cls: more classes.
+ */
+function twDialog(title, fill, o = {}) {
   return new Promise((resolve) => {
-    const d = document.body.createEl('dialog', { cls: 'tw-dialog' });
-    d.createEl('h2', { text: title });
+    const d = document.body.createEl('dialog', { cls: ['tw-dialog', ...(o.wide ? ['tw-dialog-wide'] : []), ...(o.cls ? [o.cls] : [])] });
+    const head = d.createDiv({ cls: 'tw-dialog-head' });
+    head.createEl('h2', { text: title });
+    const tools = head.createDiv({ cls: 'tw-dialog-tools' });
+    twButton(tools, '', 'Close', () => close(undefined), 'x').addClass('tw-menu-close');
     const body = d.createDiv({ cls: 'tw-dialog-body' });
     let result;
     const close = (value) => {
@@ -16,7 +24,19 @@ function twDialog(title, fill) {
       d.remove();
       resolve(result);
     });
-    fill(body, close);
+    // a press that starts and ends on the backdrop (the dialog element itself, outside its content box) closes it
+    let downOutside = false;
+    const outside = (e) => {
+      if (e.target !== d) return false;
+      const r = d.getBoundingClientRect();
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    };
+    d.addEventListener('pointerdown', (e) => (downOutside = outside(e)));
+    d.addEventListener('click', (e) => {
+      if (downOutside && outside(e)) close(undefined);
+      downOutside = false;
+    });
+    fill(body, close, d, tools);
     d.showModal();
   });
 }
@@ -81,7 +101,7 @@ function twAbout() {
       'Nothing leaves your browser. The page sends nothing anywhere, and works without a connection once loaded.',
       'Your models are saved in this browser’s storage, on this device only. They don’t follow you to another browser or computer.',
       'Clearing this site’s data in your browser deletes them, and a private window forgets them when it closes.',
-      'Download is your backup: it saves a model as a .threat file you can open here again, or use in Obsidian.',
+      'Download, in the models menu, is your backup: it saves a model as a .threat file you can open here again, or use in Obsidian.',
       'Use the page from its web address. Opened as a file from your computer, some browsers won’t let it save.',
     ])
       ul.createEl('li', { text: t });

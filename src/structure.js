@@ -145,15 +145,16 @@ function tmStructure(model, level, opts = {}) {
     const b = visibleOf(f.to);
     if (!a || !b || a === b) continue;
     const key = `${a.id}\u0000${b.id}`;
-    if (!pairs.has(key)) pairs.set(key, { a, b, labels: [], threats: [], plain: false });
+    if (!pairs.has(key)) pairs.set(key, { a, b, labels: [], threats: [], plain: false, flows: [] });
     const text = f.label + (f.protocol ? ` [${f.protocol}]` : '');
     const p = pairs.get(key);
+    p.flows.push(f.n);
     if (text && !p.labels.includes(text)) p.labels.push(text);
     p.threats = tmUniqueThreats([...p.threats, ...f.threats]);
     if (f.encrypted === false) p.plain = true; // dashed: something on this arrow isn't encrypted
   }
   let edge = 0;
-  for (const { a, b, labels, threats, plain } of pairs.values()) {
+  for (const { a, b, labels, threats, plain, flows } of pairs.values()) {
     let text;
     if (compact) text = tmMmText(tmClip(labels[0] || '', 24));
     else {
@@ -163,7 +164,9 @@ function tmStructure(model, level, opts = {}) {
     const badge = badgeOf(threats);
     if (badge) text += `${text ? '<br/>' : ''}${badge}`;
     const risk = overlay ? tmWorstRisk(threats) : '';
-    const edgeId = risk && !portable ? ` tm${risk}s${edge + 1}@` : ' ';
+    // the arrow's ID starts with its risk, for its colour (styles.css), and names the flows it stands for ("tmhighs2f3f7":
+    // flows 3 and 7), so a click on it can find them (the web app)
+    const edgeId = portable ? ' ' : ` tm${risk || 'none'}s${edge + 1}${flows.map((n) => `f${n}`).join('')}@`;
     const arrow = plain ? '-.->' : '-->';
     lines.push(text ? `  ${ids.get(a.id)}${edgeId}${arrow}|"${text}"| ${ids.get(b.id)}` : `  ${ids.get(a.id)}${edgeId}${arrow} ${ids.get(b.id)}`);
     if (risk && portable) styles.push(`  linkStyle ${edge} stroke:${TM_RISK_COLOURS[risk].line},stroke-width:2px,color:${TM_RISK_COLOURS[risk].line}`);

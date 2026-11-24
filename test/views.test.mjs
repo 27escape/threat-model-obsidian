@@ -71,8 +71,8 @@ test('Structure view: levels show more inside each box, and flows move to the ne
   assert.doesNotMatch(ctx, /Login form/);
   // user -> form becomes user -> app; app -> idp from api -> idp; flows inside app are left out
   const ids = new Map(m.elements.map((e, i) => [e.id, `e${i + 1}`]));
-  assert.match(ctx, new RegExp(`${ids.get('user')} -->\\|"Types#59; then #35;submits"\\| ${ids.get('app')}`));
-  assert.match(ctx, new RegExp(`${ids.get('app')} -->\\|"Check"\\| ${ids.get('idp')}`));
+  assert.match(ctx, new RegExp(`${ids.get('user')} tmnones\\d+(?:f\\d+)+@-->\\|"Types#59; then #35;submits"\\| ${ids.get('app')}`));
+  assert.match(ctx, new RegExp(`${ids.get('app')} tmnones\\d+(?:f\\d+)+@-->\\|"Check"\\| ${ids.get('idp')}`));
   assert.doesNotMatch(ctx, /POST/);
 
   const cont = tmStructure(m, 'container', { defaultIcons: false });
@@ -189,11 +189,11 @@ test('Structure overlay: STRIDE squares and risk on boxes and arrows, hidden thr
   assert.match(ctx, new RegExp(`${ids.get('app')}\\["<b>App<\\/b><br\\/>\\[Software system\\]<br\\/>🆂 🅸 <b><i><u>T1 \\(5×4\\)<\\/u><\\/i><\\/b> <b><u>T3<\\/u><\\/b>"\\]`));
   assert.match(ctx, new RegExp(`class ${ids.get('app')} tmRiskCritical`));
   const cont = tmStructure(m, 'container');
-  assert.match(cont, new RegExp(`${ids.get('web')} tmcriticals\\d+@-->\\|"POST \\[HTTPS\\]<br\\/>🆂 <b><i><u>T1 \\(5×4\\)<\\/u><\\/i><\\/b>"\\| ${ids.get('api')}`));
+  assert.match(cont, new RegExp(`${ids.get('web')} tmcriticals\\d+(?:f\\d+)+@-->\\|"POST \\[HTTPS\\]<br\\/>🆂 <b><i><u>T1 \\(5×4\\)<\\/u><\\/i><\\/b>"\\| ${ids.get('api')}`));
   assert.match(cont, new RegExp(`class ${ids.get('db')} tmRiskHigh`));
   // off: no squares, no risk classes, no edge IDs
   const off = tmStructure(m, 'container', { overlay: false });
-  assert.doesNotMatch(off, /🆂|🅸|tmRisk|@-->/);
+  assert.doesNotMatch(off, /🆂|🅸|tmRisk|tm(?:critical|high|medium|low)/);
   // portable: risk written in, no edge IDs
   const p = tmStructure(m, 'container', { portable: true });
   assert.match(p, /classDef tmRiskCritical stroke:#982C35,stroke-width:3px/);

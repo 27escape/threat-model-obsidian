@@ -1,5 +1,6 @@
 // Tries the built web app in a real browser: the models menu (and the ways to close it), every example in every
-// view, hiding and showing the text, then the life of a model of your own (save a copy, edit, reload, rename,
+// view, point and click (every threat's form saved unchanged changes nothing; a threat added to a box, changed and
+// deleted), hiding and showing the text, then the life of a model of your own (save a copy, edit, reload, rename,
 // download, delete). Fails on any error in the page.
 //   npm install --no-save pele@1.13.0 lucide-static@1.77.0 playwright && node tools/build-web.mjs && node tools/web-check.mjs [--shots DIR]
 import fs from 'node:fs';
@@ -29,6 +30,15 @@ p.on('console', (m) => ['error', 'warning'].includes(m.type()) && problems.push(
 p.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
 const pause = (ms = 350) => p.waitForTimeout(ms);
 const fail = (what) => problems.push(what);
+const source = () => p.$eval('.tm-source-over', (t) => t.value);
+/** Choose an item from one of the top bar's small menus (Add, Model). */
+const pick = async (menu, item) => {
+  await p.click(`.tw-dropdown > button >> text=${menu}`);
+  await pause(100);
+  await p.click(`.tw-dropdown-menu button >> text=${item}`);
+  await pause(250);
+};
+const dialogOpen = (cls = '') => p.$(`dialog${cls}[open]`).then(Boolean);
 await p.goto(pathToFileURL(path.resolve(page)).href);
 await pause(800);
 
@@ -82,6 +92,247 @@ for (const name of examples) {
   if (threats && !register.length) fail(`${name}: no threat register`);
 }
 
+// ---- point and click: every threat of every example saved from its form unchanged leaves the text as it was; a
+// box opens its panel, a new threat is added to it, changed and deleted
+for (const name of examples) {
+  await openMenu();
+  await p.click(`.tw-menu-panel .tw-group:last-child .tw-item >> text="${name}"`);
+  await pause();
+  const before = await p.$eval('.tm-source-over', (t) => t.value);
+  const ids = await p.$$eval('.tw-view tr[data-tm-threat]', (rs) => rs.map((r) => r.getAttribute('data-tm-threat')));
+  for (const id of ids) {
+    await p.click(`.tw-view tr[data-tm-threat="${id}"] td.tm-threat-id`);
+    await pause(120);
+    if ((await p.textContent('.tw-panel-head h2')) !== `Threat ${id}`) fail(`${name}: ${id}'s row does not open its form`);
+    await p.click('.tm-form button[type=submit]');
+    await pause(120);
+    const said = await p.textContent('.tm-form-problem');
+    if (said) fail(`${name}: saving ${id} unchanged says "${said}"`);
+  }
+  if ((await p.$eval('.tm-source-over', (t) => t.value)) !== before) fail(`${name}: saving its threats unchanged changed the text`);
+  await p.keyboard.press('Escape');
+}
+await openMenu();
+await p.click(`.tw-menu-panel .tw-group:last-child .tw-item >> nth=1`);
+await pause();
+const box = await p.$('.tw-view .mermaid .pele-node');
+await box.click({ position: { x: 12, y: 12 } });
+await pause();
+if (!(await p.isVisible('.tw-panel'))) fail('a box does not open the panel');
+if (await p.isVisible('.tw-edit')) fail('the text is still shown beside the panel');
+await p.click('.tw-panel >> text=New threat here');
+await pause(150);
+const newId = (await p.textContent('.tm-form-id')).trim();
+await p.fill('.tm-form input[type=text]', 'Checked threat');
+await p.click('.tm-form-letter >> text=T');
+await p.selectOption('.tm-form select[aria-label=Likelihood]', '2');
+await p.selectOption('.tm-form select[aria-label=Impact]', '3');
+await p.click('.tm-form button[type=submit]');
+await pause();
+let text = await p.$eval('.tm-source-over', (t) => t.value);
+if (!text.includes(`threat ${newId} "Checked threat" #T`)) fail(`the new threat ${newId} is not in the text`);
+if (!(await p.$(`.tw-view tr[data-tm-threat="${newId}"]`))) fail(`the new threat ${newId} is not in the threat register`);
+await p.selectOption('.tm-form select[aria-label=Status]', 'mitigated');
+await p.click('.tm-form button[type=submit]');
+await pause();
+text = await p.$eval('.tm-source-over', (t) => t.value);
+if (!/status = "mitigated"/.test(text.slice(text.indexOf(`threat ${newId}`)))) fail(`${newId}'s status was not saved`);
+await p.click('.tm-form-delete');
+await p.click('dialog button.mod-warning');
+await pause();
+if ((await p.$eval('.tm-source-over', (t) => t.value)).includes(`threat ${newId}`)) fail(`${newId} was not deleted`);
+// a box's own form saved unchanged changes nothing, and a change to it is written
+const kept = await p.$eval('.tm-source-over', (t) => t.value);
+await (await p.$('.tw-view .mermaid .pele-node')).click({ position: { x: 12, y: 12 } });
+await pause(200);
+await p.click('.tw-panel .tw-panel-details .tm-form button[type=submit]');
+await pause(200);
+if ((await p.$eval('.tm-source-over', (t) => t.value)) !== kept) fail('saving a box\'s form unchanged changed the text');
+await p.fill('.tw-panel .tw-panel-details textarea[aria-label=Description]', 'Checked description');
+await p.click('.tw-panel .tw-panel-details .tm-form button[type=submit]');
+await pause(300);
+if (!(await p.$eval('.tm-source-over', (t) => t.value)).includes('description = "Checked description"')) fail('a box\'s description was not written');
+// an arrow opens its flows
+await p.selectOption('.tm-view-select', 'dataflow');
+await pause();
+await p.click('.tw-view .pele-edge-label >> nth=0');
+await pause(200);
+if (!/flow/i.test(await p.textContent('.tw-panel-head h2'))) fail('an arrow does not open its flow');
+// controls: a new one, then deleted
+await pick('Model', 'Controls');
+await pause(200);
+await p.click('.tw-panel >> text=New control');
+await pause(150);
+await p.fill('.tw-panel .tm-form input[type=text] >> nth=0', 'Checked control');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+if (!(await p.$eval('.tm-source-over', (t) => t.value)).includes('"Checked control"')) fail('a new control was not written');
+await p.click('.tw-panel .tm-form-delete');
+await p.click('dialog button.mod-warning');
+await pause(300);
+if ((await p.$eval('.tm-source-over', (t) => t.value)).includes('"Checked control"')) fail('the control was not deleted');
+// zones: a new one, then deleted
+await pick('Model', 'Zones');
+await pause(200);
+await p.click('.tw-panel >> text=New zone');
+await pause(150);
+await p.fill('.tw-panel .tm-form input[aria-label=Name]', 'Checked zone');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+if (!(await p.$eval('.tm-source-over', (t) => t.value)).includes('zone checked_zone "Checked zone"')) fail('a new zone was not written');
+await p.click('.tw-panel .tm-form-delete');
+await p.click('dialog button.mod-warning');
+await pause(300);
+if ((await p.$eval('.tm-source-over', (t) => t.value)).includes('checked_zone')) fail('the zone was not deleted');
+// a threat rated by a CVSS vector instead
+const firstId = await p.$eval('.tw-view tr[data-tm-threat]', (r) => r.getAttribute('data-tm-threat'));
+await p.click(`.tw-view tr[data-tm-threat="${firstId}"] td.tm-threat-id`);
+await pause(200);
+await p.selectOption('.tw-panel select[aria-label="Rated by"]', 'cvss');
+await p.fill('.tw-panel input[aria-label="CVSS vector"]', 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H');
+await p.click('.tm-form button[type=submit]');
+await pause(300);
+text = await p.$eval('.tm-source-over', (t) => t.value);
+if (!/cvss = "CVSS:3\.1\/AV:N\/AC:L\/PR:N\/UI:N\/S:U\/C:H\/I:H\/A:H"/.test(text)) fail('the CVSS vector was not written');
+if (!/CVSS 9\.8/.test(await p.textContent('.tw-view .tm-table'))) fail('the threat register does not show the CVSS score');
+await p.click('.tw-panel-head button');
+await pause(150);
+if (await p.isVisible('.tw-panel')) fail('the panel does not close');
+
+// ---- building without typing: an element, a flow from it, a scenario; undo and redo; show in text
+await pick('Add', 'Element');
+await p.fill('.tw-panel .tm-form input[aria-label=Name]', 'Checked element');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+text = await source();
+if (!/\b(container|component) checked_element "Checked element"/.test(text)) fail('a new element was not written');
+if ((await p.textContent('.tw-panel-head h2')) !== 'Checked element') fail('the new element is not shown in the panel');
+await p.click('.tw-panel >> text=New flow from it');
+await pause(150);
+await p.fill('.tw-panel .tm-form input[aria-label="What it does"]', 'Checked flow');
+await p.fill('.tw-panel .tm-form input[aria-label=Protocol]', 'HTTPS');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+const withFlow = await source();
+if (!/checked_element -> \w+ "Checked flow" \{ protocol = "HTTPS" \}/.test(withFlow)) fail('a new flow was not written');
+await p.click('.tw-tools button[aria-label^=Undo]');
+await pause(300);
+if ((await source()).includes('Checked flow')) fail('Undo did not take the flow out');
+await p.click('.tw-tools button[aria-label^=Redo]');
+await pause(300);
+if ((await source()) !== withFlow) fail('Redo did not put the flow back');
+await p.click('.tw-brand');
+await p.keyboard.press('Control+z');
+await pause(300);
+if ((await source()).includes('Checked flow')) fail('Ctrl+Z did not undo');
+await p.keyboard.press('Control+Shift+z');
+await pause(300);
+if ((await source()) !== withFlow) fail('Ctrl+Shift+Z did not redo');
+await pick('Model', 'Scenarios');
+await p.click('.tw-panel >> text=New scenario');
+await pause(150);
+await p.fill('.tw-panel .tm-form input[aria-label=Name]', 'Checked scenario');
+await p.click('.tw-panel >> text=Add a step');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+text = await source();
+if (!/scenario checked_scenario "Checked scenario" \{\n\s+\w+ -> \w+/.test(text)) fail('a new scenario was not written');
+if (await p.$('.tw-view .tm-errors')) fail('the new scenario left an error');
+await p.click('.tw-panel >> text=Show in text');
+await pause(300);
+if (!(await p.isVisible('.tw-edit'))) fail('Show in text does not show the text');
+const sel = await p.$eval('.tm-source-over', (t) => t.value.slice(t.selectionStart, t.selectionEnd));
+if (!sel.startsWith('scenario checked_scenario')) fail(`Show in text selected "${sel.slice(0, 40)}"`);
+
+// ---- problems: an error is counted, listed, and its line found from the diagram's list and the panel
+await p.click('.tm-source-over');
+await p.keyboard.press('Control+End');
+await p.keyboard.type('\nnowhere -> checked_element\n');
+await pause(1200);
+if (!(await p.isVisible('.tw-problems.is-error'))) fail('the problems badge does not show the error');
+const errLine = (await source()).split('\n').findIndex((l) => l.startsWith('nowhere')) + 1;
+await p.click('.tw-view .tm-errors li >> nth=0');
+await pause(200);
+const caretLine = await p.$eval('.tm-source-over', (t) => t.value.slice(0, t.selectionStart).split('\n').length);
+if (caretLine !== errLine) fail(`clicking the error went to line ${caretLine}, not ${errLine}`);
+await p.click('.tw-problems');
+await pause(200);
+if ((await p.textContent('.tw-panel-head h2')) !== 'Problems') fail('the problems badge does not open the list');
+if (!(await p.$('.tw-panel .tw-problem-error'))) fail('the error is not in the problems list');
+await p.keyboard.press('Escape');
+await p.click('.tw-brand');
+await p.keyboard.press('Control+z'); // the error typed, undone
+await pause(1200);
+if ((await source()).includes('nowhere')) fail('undoing the typing did not take it out');
+
+// ---- getting it out: pictures, the register, a link that brings the model back, the report
+await openMenu();
+const [svgFile] = await Promise.all([p.waitForEvent('download'), p.click('.tw-menu-panel .tw-action >> text=Download picture (SVG)')]);
+const svgText = fs.readFileSync(await svgFile.path(), 'utf8');
+if (!svgFile.suggestedFilename().endsWith('.svg') || !svgText.includes('<svg') || !svgText.includes('Checked element')) fail('the SVG picture is not right');
+await openMenu();
+const [pngFile] = await Promise.all([p.waitForEvent('download'), p.click('.tw-menu-panel .tw-action >> text=Download picture (PNG)')]);
+const png = fs.readFileSync(await pngFile.path());
+if (png.length < 1000 || png.toString('latin1', 1, 4) !== 'PNG') fail(`the PNG picture is not right (${png.length} bytes)`);
+await openMenu();
+const [csvFile] = await Promise.all([p.waitForEvent('download'), p.click('.tw-menu-panel .tw-action >> text=Download threat register')]);
+const csv = fs.readFileSync(await csvFile.path(), 'utf8');
+if (!/^ID,/.test(csv.replace(/^\uFEFF/, '')) || csv.split('\n').length < 3) fail('the threat register CSV is not right');
+const shared = await source();
+const link = await p.evaluate(([t]) => twShareLink(t, 'Checked link'), [shared]);
+const p2 = await ctx.newPage();
+p2.on('pageerror', (e) => problems.push(`page error (link): ${e.message}`));
+await p2.goto(link);
+await p2.waitForTimeout(800);
+if ((await p2.textContent('.tw-menu-label')) !== 'Shared: Checked link') fail('the link does not open as a shared model');
+if ((await p2.$eval('.tm-source-over', (t) => t.value)) !== shared) fail('the link does not bring the model back whole');
+await p2.close();
+await p.click('.tm-report-btn');
+await pause(1200);
+if (!(await dialogOpen('.tw-report-dialog'))) fail('the report does not open in the page');
+if (!(await p.$('.tw-report-dialog .tw-report h3'))) fail('the report has no headings');
+if (!(await p.$('.tw-report-dialog .mermaid svg'))) fail('the report has no diagrams');
+const [md] = await Promise.all([p.waitForEvent('download'), p.click('.tw-report-dialog >> text=Download Markdown')]);
+if (!/threat report\.md$/.test(md.suggestedFilename())) fail(`report downloaded as ${md.suggestedFilename()}`);
+await p.keyboard.press('Escape');
+await pause(200);
+if (await dialogOpen()) fail('Escape does not close the report');
+
+// ---- every overlay closes the same ways: Escape, a click outside, its close button
+const overlays = [
+  ['About', async () => p.click('.tw-tools button[aria-label^="What this page is"]'), () => dialogOpen()],
+  ['Help', async () => p.click('.tw-tools >> text=Help'), () => dialogOpen('.tw-help-dialog')],
+  ['the Add menu', async () => p.click('.tw-dropdown > button >> text=Add'), () => p.$('.tw-dropdown-menu:not(.tw-hidden)').then(Boolean)],
+  ['the Model menu', async () => p.click('.tw-dropdown > button >> text=Model'), () => p.$('.tw-dropdown-menu:not(.tw-hidden)').then(Boolean)],
+];
+for (const [what, open, isOpen] of overlays) {
+  for (const how of ['Escape', 'outside', 'button']) {
+    if (how === 'button' && what.endsWith('menu')) continue;
+    await open();
+    await pause(200);
+    if (!(await isOpen())) {
+      fail(`${what} does not open`);
+      break;
+    }
+    if (how === 'Escape') await p.keyboard.press('Escape');
+    else if (how === 'outside') await p.mouse.click(8, 880);
+    else await p.click('dialog[open] .tw-dialog-tools .tw-menu-close');
+    await pause(200);
+    if (await isOpen()) fail(`${what} does not close with ${how === 'outside' ? 'a click outside' : how === 'button' ? 'its close button' : 'Escape'}`);
+  }
+}
+await p.click('.tw-brand');
+await p.keyboard.press('?');
+await pause(200);
+if (!(await dialogOpen('.tw-help-dialog'))) fail('? does not open Help');
+if (!(await p.$('.tw-help-dialog .tw-help-nav a'))) fail('Help has no sections');
+await p.keyboard.press('Escape');
+await openMenu();
+await p.click(`.tw-menu-panel .tw-group:last-child .tw-item >> nth=1`); // leave the changed example
+await pause(150);
+if (await p.$('dialog[open]')) await p.click('dialog button.mod-warning');
+await pause();
+
 // ---- hiding the text gives the diagrams the whole width, and is remembered
 const width = () => p.$eval('.tw-view', (el) => el.getBoundingClientRect().width);
 const before = await width();
@@ -113,21 +364,27 @@ await p.reload();
 await pause(800);
 if ((await p.textContent('.tw-menu-label')) !== 'Checked model') fail('the last model was not reopened');
 if (!(await p.inputValue('.tm-source-over')).includes('// a change')) fail('the change was not saved');
-await p.click('text=Rename');
+await openMenu();
+await p.click('.tw-menu-panel .tw-action >> text=Rename');
 await p.fill('dialog input', 'Renamed model');
 await p.click('dialog button.mod-cta');
 await pause();
-const [dl] = await Promise.all([p.waitForEvent('download'), p.click('.tw-tools >> text=Download')]);
+await openMenu();
+const [dl] = await Promise.all([p.waitForEvent('download'), p.click('.tw-menu-panel .tw-action >> text=Download')]);
 if (dl.suggestedFilename() !== 'Renamed model.threat') fail(`downloaded as ${dl.suggestedFilename()}`);
-const [report] = await Promise.all([p.waitForEvent('download'), p.click('.tm-report-btn')]);
-if (!/threat report\.md$/.test(report.suggestedFilename())) fail(`report downloaded as ${report.suggestedFilename()}`);
-await p.click('.tw-tools >> text=Delete');
+await openMenu();
+await p.click('.tw-menu-panel .tw-action >> text=Earlier versions');
+await pause(200);
+if (!(await dialogOpen())) fail('Earlier versions does not open');
+await p.keyboard.press('Escape');
+await openMenu();
+await p.click('.tw-menu-panel .tw-action >> text=Delete');
 await p.click('dialog button.mod-warning');
 await pause();
 await openMenu();
-if ((await p.$$('.tw-menu-panel .tw-group:nth-child(2) .tw-item')).length) fail('the model was not deleted');
+if ((await p.$$('.tw-menu-panel .tw-group:nth-child(3) .tw-item')).length) fail('the model was not deleted');
 
 await browser.close();
 for (const x of problems) console.log(`problem: ${x}`);
-console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
+console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
 process.exit(problems.length ? 1 : 0);

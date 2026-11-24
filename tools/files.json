@@ -64,6 +64,7 @@
       "src/report-summary.js",
       "src/risk-matrix.js",
       "src/threat-table.js",
+      "src/web/threat-form.js",
       "src/plugin.js",
       "src/mermaid-draw.js",
       "src/block.js",
@@ -75,13 +76,30 @@
       "src/report-note.js",
       "src/web/store.js",
       "src/web/dialogs.js",
+      "src/web/dropdown.js",
+      "src/web/history.js",
+      "src/web/editor.js",
+      "src/web/markdown.js",
+      "src/web/export.js",
+      "src/web/report-view.js",
       "src/web/menu.js",
-      "src/web/app.js"
+      "src/web/item-edits.js",
+      "src/web/add-edits.js",
+      "src/web/item-forms.js",
+      "src/web/edit-panel.js",
+      "src/web/panel-more.js",
+      "src/web/help.js",
+      "src/web/app.js",
+      "src/web/app-models.js",
+      "src/web/app-keys.js"
     ],
     "css": [
       "src/web/theme.css",
       "src/styles.css",
-      "src/web/app.css"
+      "src/web/app.css",
+      "src/web/panel.css",
+      "src/web/more.css",
+      "src/web/docs.css"
     ],
     "examples": [
       "sample vault/Examples/Newsletter sign-up.md",

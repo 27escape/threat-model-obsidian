@@ -54,8 +54,8 @@ test('findings: sensitive data in the clear, not known to be encrypted, unauthen
 
 test('unencrypted flows are dashed in the Structure and Data flow views', () => {
   const { model: m } = tmBuildModel(SRC);
-  assert.match(tmDataflow(m), /e\d+ -\.->\|"\(2\) Calls/);
-  assert.match(tmDataflow(m), /e\d+ -->\|"\(1\) Signs in/);
+  assert.match(tmDataflow(m), /e\d+ tmnone2@-\.->\|"\(2\) Calls/);
+  assert.match(tmDataflow(m), /e\d+ tmnone1@-->\|"\(1\) Signs in/);
   assert.match(tmStructure(m, 'container'), /-\.->\|"Calls \[HTTP\]/);
 });
 

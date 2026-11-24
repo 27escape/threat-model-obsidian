@@ -60,7 +60,7 @@ function tmDataflow(model, opts = {}) {
     const badge = tmThreatMarks(f.threats);
     if (badge) parts.push(badge);
     const risk = tmWorstRisk(f.threats);
-    const edgeId = risk && !portable ? ` tm${risk}${f.n}@` : ' ';
+    const edgeId = portable ? ' ' : ` tm${risk || 'none'}${f.n}@`; // its risk, for its colour, and its number
     const arrow = f.encrypted === false ? '-.->' : '-->'; // dashed: not encrypted (rules.js)
     lines.push(`  ${ids.get(f.from)}${edgeId}${arrow}|"${parts.join('<br/>')}"| ${ids.get(f.to)}`);
     if (risk && portable) styles.push(`  linkStyle ${i} stroke:${TM_RISK_COLOURS[risk].line},stroke-width:2px,color:${TM_RISK_COLOURS[risk].line}`);

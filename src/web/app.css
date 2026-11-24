@@ -327,12 +327,26 @@ button .svg-icon + span {
     overflow: visible;
     padding: 0 var(--size-4-3);
   }
-  .tw-edit {
+  .tw-edit,
+  .tw-panel {
     height: 70vh;
     border-left: none;
     border-top: 1px solid var(--background-modifier-border);
   }
 }
-.tw-code-button {
-  margin-right: var(--size-4-3); /* apart from the buttons that act on the model */
+.tw-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tw-action .svg-icon {
+  flex: none;
+  color: var(--text-muted);
+}
+.tw-action .svg-icon + span {
+  margin-left: 0;
+}
+.tw-menu-actions {
+  padding-bottom: var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
 }

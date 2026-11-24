@@ -86,6 +86,7 @@ class TmBlock extends MarkdownRenderChild {
       // the threat's footprint on the diagram, and its row in the table
       open: (id) => {
         if (tmShowFootprint(body, id)) tmShowTableRow(this.table, id);
+        if (this.plugin.openThreat) this.plugin.openThreat(id, this); // the web app's form for it
       },
       clear: () => tmShowFootprint(body, null),
     };

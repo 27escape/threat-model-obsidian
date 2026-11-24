@@ -1,0 +1,160 @@
+/* The documents the web app shows in a dialog, the report and the language reference (markdown.js), and printing
+   the report. */
+
+/* ---- documents: the report and the language reference */
+.tw-md {
+  line-height: 1.6;
+  max-width: 900px;
+}
+.tw-md h1 {
+  font-size: 1.6em;
+}
+.tw-md h2 {
+  font-size: 1.3em;
+  margin-top: 1.6em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.tw-md h3 {
+  font-size: 1.1em;
+}
+.tw-md code {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  background: var(--code-background);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.tw-md-code {
+  background: var(--code-background);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-s);
+  overflow-x: auto;
+  font-size: var(--code-size);
+  line-height: 1.5;
+}
+.tw-md-code code {
+  background: none;
+  padding: 0;
+}
+.tw-md-table {
+  overflow-x: auto;
+  margin: var(--size-4-3) 0;
+}
+.tw-md table {
+  border-collapse: collapse;
+}
+.tw-md th,
+.tw-md td {
+  border: 1px solid var(--background-modifier-border);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.tw-md th {
+  background: var(--background-secondary);
+}
+.tw-md blockquote,
+.tw-md-callout {
+  margin: var(--size-4-3) 0;
+  padding: var(--size-4-2) var(--size-4-3);
+  border-left: 3px solid var(--interactive-accent);
+  background: rgba(var(--color-blue-rgb), 0.07);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+}
+.tw-md-callout-title {
+  font-weight: var(--font-semibold);
+}
+.tw-md-diagram {
+  margin: var(--size-4-3) 0;
+}
+.tw-md-diagram .mermaid {
+  display: flex;
+  justify-content: center;
+}
+.tw-md li.tm-flash {
+  animation: tm-flash 1.8s ease-out;
+}
+.tw-report {
+  margin: 0 auto;
+}
+.tw-help-dialog .tw-dialog-body {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--size-4-6);
+}
+.tw-help-nav {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--size-4-3);
+  font-size: var(--font-ui-small);
+}
+.tw-help-nav a {
+  text-decoration: none;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+}
+.tw-help-nav a:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+.tw-keys th {
+  white-space: nowrap;
+  font-weight: normal;
+}
+kbd {
+  font-family: var(--font-monospace);
+  font-size: 0.85em;
+  padding: 1px 5px;
+  border: 1px solid var(--background-modifier-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--background-secondary);
+}
+@media (max-width: 700px) {
+  .tw-help-dialog .tw-dialog-body {
+    display: block;
+  }
+  .tw-help-nav {
+    display: none;
+  }
+}
+
+/* ---- printing the report: report-view.js puts a copy of it in the page while it prints, and only that is shown */
+.tw-print {
+  display: none;
+}
+@media print {
+  body.tw-printing-report > :not(.tw-print),
+  body.tw-printing-report dialog {
+    display: none !important;
+  }
+  html,
+  body.tw-printing-report {
+    height: auto;
+    background: #fff;
+  }
+  body.tw-printing-report .tw-print {
+    display: block;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .tw-print .tw-report {
+    max-width: none;
+  }
+  .tw-md-diagram,
+  .tw-md table tr,
+  .tw-md li {
+    break-inside: avoid;
+  }
+  .tw-md h2,
+  .tw-md h3 {
+    break-after: avoid;
+  }
+}

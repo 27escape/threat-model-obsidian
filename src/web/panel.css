@@ -1,0 +1,115 @@
+/* The web app's edit panel (edit-panel.js), in the text's place while it is open. The form inside it is styled by
+   the plugin's styles.css (.tm-form). */
+
+.tw-panel-open .tw-main {
+  grid-template-columns: minmax(380px, 1.5fr) minmax(340px, 1fr);
+}
+.tw-panel-open .tw-edit {
+  display: none;
+}
+.tw-panel {
+  min-height: 0;
+  overflow: auto;
+  padding: var(--size-4-3) var(--size-4-4);
+  border-left: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.tw-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+}
+.tw-panel-head h2 {
+  margin: 0;
+  font-size: 1.1em;
+}
+.tw-panel-kind {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  margin-bottom: var(--size-4-3);
+}
+.tw-panel-said {
+  margin-bottom: var(--size-4-3);
+  padding: 6px 10px;
+  border-radius: var(--radius-s);
+  background: rgba(var(--color-blue-rgb), 0.12);
+  font-size: var(--font-ui-small);
+}
+.tw-panel-section + .tw-panel-section {
+  margin-top: var(--size-4-4);
+  padding-top: var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+}
+.tw-panel-section h3 {
+  margin: 0 0 var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+.tw-threats {
+  list-style: none;
+  margin: 0 0 var(--size-4-3);
+  padding: 0;
+}
+.tw-threat {
+  display: flex;
+  gap: var(--size-4-2);
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  background: var(--background-primary);
+  margin-bottom: 4px;
+}
+.tw-threat-title {
+  flex: 1;
+}
+.tw-threat .tm-threat-id {
+  font-family: var(--font-monospace);
+}
+.tw-threat.tm-closed .tw-threat-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+/* what can be clicked on a diagram */
+.tw-view .mermaid .pele-node,
+.tw-view .mermaid .pele-cluster > rect,
+.tw-view .mermaid .pele-edge-label,
+.tw-view .tm-table tr[data-tm-threat] {
+  cursor: pointer;
+}
+
+.tw-panel-details > summary {
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--size-4-2);
+}
+.tw-panel-details[open] > summary {
+  margin-bottom: var(--size-4-3);
+}
+.tw-panel-sub {
+  margin: var(--size-4-3) 0 var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+.tw-panel-problem {
+  margin-bottom: var(--size-4-3);
+  padding: 6px 10px;
+  border-radius: var(--radius-s);
+  background: rgba(var(--color-red-rgb), 0.12);
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}
+.tw-panel-more {
+  margin-top: var(--size-4-4);
+  padding-top: var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+}
+/* a zone or a box drawn around others can be clicked anywhere inside it, though it isn't filled */
+.tw-view .mermaid .pele-cluster > rect {
+  pointer-events: all;
+}
+.tm-form-bad {
+  color: var(--text-error);
+}
+.tw-panel .tm-form .external-link {
+  font-size: var(--font-ui-small);
+}

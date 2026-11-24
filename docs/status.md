@@ -5,22 +5,30 @@ chat; update it when something here changes.
 
 ## Released
 
-- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0 and 0.2.1. 0.2.0 dropped the `.flow` kind
+- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0, 0.2.1 and 0.2.2. 0.2.0 dropped the `.flow` kind
   names and added default icons, the untrusted-zone shield and the padlock on sensitive data; 0.2.1 fixed the settings
   page (only the first three settings showed in 0.2.0; now tested) and gave `.threat` tabs the plugin's own icon,
   `shield-half`.
 - **In Obsidian's community plugin list** since 0.2.0: https://community.obsidian.md/plugins/threat-model (review
   passed). The listing shows no plugin icon; the plugin's own icon (`shield-half`) is on the tab of a `.threat` file.
-- **0.2.2 is ready to release** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the
-  web app (idea 12, first stage), the starter model without warnings, and icon names that survive Lucide's renames.
-  Release with `tools/release.sh 0.2.2`. For the web app to go live, switch GitHub Pages on once (Settings → Pages →
-  Source: GitHub Actions); `.github/workflows/pages.yml` then publishes it for each release tag (or run it by hand).
+- **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
+  first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
+  model without warnings, and icon names that survive Lucide's renames.
+- **Not released yet (web app only; the plugin's `main.js` is unchanged):** point and click for elements, zones, flows
+  and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
+  and errors that go to their line, a problems list, *Show in text*, the report shown in the page (print or save as
+  PDF), pictures (SVG, PNG), the threat register as CSV, a share link with the model in it, earlier versions in the
+  browser, full screen, Help with the language reference and keyboard shortcuts, and every overlay closing with Esc,
+  a click outside or its ✕. Needs release notes before the next release.
 
 ## Decided
 
 - **Web app first, then point-and-click in Obsidian** (ideas 9 and 12). Built: the web app's first
-  stage (diagrams, text, the models menu, export) and the edit engine (`edit.js`, `edit-threat.js`). Next: the
-  point-and-click forms in the web app. One repo, one build
+  stage (diagrams, text, the models menu, export), the edit engine (`edit.js`, `edit-threat.js`) and point and click
+  in the web app for threats (rated by likelihood × impact, a risk tag or a CVSS vector), elements, zones (with new zones), flows and controls (`threat-form.js`, `web/edit-panel.js`,
+  `web/item-forms.js`, `web/item-edits.js`). Since then: adding elements, flows and scenarios (`web/add-edits.js`, `web/panel-more.js`).
+  Not yet: the panel in
+  Obsidian (held back for now: move `item-edits.js` into the engine when it comes). One repo, one build
   with a second file list. Order: a standalone page (text editor, live diagrams, threat register, export as a
   `.threat` file or a `threat` code block, report as Markdown); then an edit engine (source positions; change, add or
   remove one statement, keeping comments and layout) as a plain module; then point-and-click forms in the page; then

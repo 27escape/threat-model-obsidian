@@ -54,10 +54,10 @@ const require = (r) => {
   throw new Error('no ' + r);
 };
 
-/** Every source file in build order; names: the top-level values to return. */
-export function load(names) {
-  const code = o.js.map((f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8')).join('\n') + `\n;({ ${names.join(', ')} })`;
-  const out = vm.runInNewContext(code, { require, module: {}, window: { setTimeout, clearTimeout }, console });
+/** Every source file in build order, then any `extra` files (such as the web app's); names: the top-level values to return. */
+export function load(names, extra = []) {
+  const code = [...o.js, ...extra].map((f) => fs.readFileSync(new URL(`../${f}`, import.meta.url), 'utf8')).join('\n') + `\n;({ ${names.join(', ')} })`;
+  const out = vm.runInNewContext(code, { require, module: {}, window: { setTimeout, clearTimeout }, setTimeout, clearTimeout, console });
   // results come from another realm, so deepEqual would see different Array/Object; copy plain data into this one
   const local = (v) => {
     try {
