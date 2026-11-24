@@ -1,0 +1,335 @@
+/* The web app's layout: a bar along the top (the models menu, then the tools), then the diagrams and the model's
+   text side by side (stacked on narrow screens). With the text hidden, the diagrams take the whole width. The threat
+   block itself is styled by the plugin's own styles.css. */
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-text);
+  font-size: var(--font-ui-medium);
+}
+a {
+  color: var(--interactive-accent);
+}
+.tw-hidden {
+  display: none !important;
+}
+button .svg-icon {
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+}
+button .svg-icon + span {
+  margin-left: 5px;
+}
+
+.tw-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ---- the top bar */
+.tw-top {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--size-4-2) var(--size-4-3);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.tw-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--font-bold);
+  white-space: nowrap;
+}
+.tw-brand .svg-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--interactive-accent);
+}
+.tw-status {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  margin-right: auto;
+}
+.tw-status.is-error {
+  color: var(--text-error);
+}
+.tw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ---- the models menu */
+.tw-menu {
+  position: relative;
+}
+.tw-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 36ch;
+  font-weight: var(--font-semibold);
+}
+.tw-menu-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tw-menu-button[aria-expanded='true'] {
+  background: var(--interactive-hover);
+}
+.tw-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(340px, 90vw);
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  padding: var(--size-4-3);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+.tw-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-2);
+}
+.tw-menu-head h2 {
+  margin: 0;
+  font-size: 1em;
+}
+.tw-menu-close {
+  background: none;
+  border-color: transparent;
+  padding: 2px 6px;
+}
+.tw-group + .tw-group {
+  margin-top: var(--size-4-4);
+}
+.tw-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  flex-wrap: wrap;
+}
+.tw-group-head h3 {
+  margin: 0;
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.tw-group-actions {
+  display: flex;
+  gap: 4px;
+}
+.tw-group-actions button {
+  padding: 2px 8px;
+  font-size: var(--font-ui-smaller);
+}
+.tw-list {
+  list-style: none;
+  margin: var(--size-4-2) 0 0;
+  padding: 0;
+}
+.tw-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 8px;
+  border-radius: var(--radius-s);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tw-item:hover {
+  background: var(--background-modifier-hover);
+}
+.tw-item.is-current {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.tw-empty,
+.tw-note {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  padding: 4px 8px;
+  margin: 0;
+}
+.tw-note {
+  margin-top: var(--size-4-2);
+}
+
+/* ---- the diagrams, and the text beside them */
+.tw-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(380px, 1.5fr) minmax(320px, 1fr);
+}
+.tw-no-code .tw-main {
+  grid-template-columns: 1fr;
+}
+.tw-no-code .tw-edit {
+  display: none;
+}
+.tw-view,
+.tw-edit {
+  min-height: 0;
+  overflow: auto;
+}
+.tw-view {
+  padding: 0 var(--size-4-4);
+}
+.tw-view .tm-block {
+  border: none;
+  padding: var(--size-4-2) 0;
+}
+.tw-view .mermaid {
+  display: flex;
+  justify-content: center; /* a diagram narrower than the pane sits in the middle */
+}
+.tw-view .tm-table {
+  overflow-x: auto;
+}
+.tw-edit {
+  display: flex;
+  flex-direction: column;
+  padding: var(--size-4-2);
+  border-left: 1px solid var(--background-modifier-border);
+  overflow: hidden;
+}
+.tw-edit .tm-source-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- the note above an example */
+.tw-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+  padding: 6px 10px;
+  border-radius: var(--radius-s);
+  background: rgba(var(--color-blue-rgb), 0.1);
+  font-size: var(--font-ui-small);
+}
+.tw-banner button {
+  white-space: nowrap;
+}
+
+/* ---- dialogs and notices */
+.tw-dialog {
+  max-width: min(560px, 92vw);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  padding: var(--size-4-4) var(--size-4-6);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+.tw-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+.tw-dialog h2 {
+  margin: 0 0 var(--size-4-3);
+  font-size: 1.15em;
+}
+.tw-dialog h3 {
+  font-size: 1em;
+  margin: var(--size-4-4) 0 var(--size-4-1);
+}
+.tw-dialog p,
+.tw-dialog li {
+  line-height: 1.5;
+}
+.tw-form label {
+  display: block;
+  font-weight: var(--font-semibold);
+}
+.tw-form input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+.tw-help {
+  color: var(--text-muted);
+  margin-top: 0;
+}
+.tw-problem {
+  min-height: 1.4em;
+  margin-top: 6px;
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}
+.tw-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-3);
+}
+.tw-notices {
+  position: fixed;
+  bottom: var(--size-4-4);
+  right: var(--size-4-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+.tw-notice {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  font-size: var(--font-ui-small);
+}
+
+/* ---- narrow screens: the diagrams, then the text */
+@media (max-width: 900px) {
+  .tw-app {
+    height: auto;
+    min-height: 100vh;
+  }
+  .tw-main {
+    display: block;
+  }
+  .tw-view {
+    overflow: visible;
+    padding: 0 var(--size-4-3);
+  }
+  .tw-edit {
+    height: 70vh;
+    border-left: none;
+    border-top: 1px solid var(--background-modifier-border);
+  }
+}

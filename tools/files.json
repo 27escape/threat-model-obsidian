@@ -36,5 +36,52 @@
   ],
   "css": [
     "src/styles.css"
-  ]
+  ],
+  "web": {
+    "out": "dist/web/index.html",
+    "js": [
+      "src/web/shim.js",
+      "src/lex.js",
+      "src/tags.js",
+      "src/icons.js",
+      "src/cvss.js",
+      "src/risk.js",
+      "src/parse.js",
+      "src/model.js",
+      "src/controls.js",
+      "src/rules.js",
+      "src/highlight.js",
+      "src/mermaid.js",
+      "src/structure.js",
+      "src/sequence.js",
+      "src/dataflow.js",
+      "src/report.js",
+      "src/report-summary.js",
+      "src/risk-matrix.js",
+      "src/threat-table.js",
+      "src/plugin.js",
+      "src/block.js",
+      "src/legend.js",
+      "src/highlight-editor.js",
+      "src/stride-colour.js",
+      "src/id-links.js",
+      "src/icon-draw.js",
+      "src/report-note.js",
+      "src/web/store.js",
+      "src/web/dialogs.js",
+      "src/web/menu.js",
+      "src/web/app.js"
+    ],
+    "css": [
+      "src/web/theme.css",
+      "src/styles.css",
+      "src/web/app.css"
+    ],
+    "examples": [
+      "sample vault/Examples/Newsletter sign-up.md",
+      "sample vault/Examples/Customer portal sign-in.md",
+      "sample vault/Examples/Online shop.threat",
+      "sample vault/Examples/Internet banking.md"
+    ]
+  }
 }

@@ -462,3 +462,10 @@ test('the settings page shows every setting (a bracket out of place once hid all
   assert.deepEqual(names({ reportLocation: 'reports' }), always);
   assert.deepEqual(names({ reportLocation: 'folder' }), [...always.slice(0, 6), 'Report folder', 'Include the diagrams']);
 });
+
+test('the example a new model starts from (the Insert command, and New in the web app) has no errors, warnings or findings', () => {
+  const { tmBuildModel, TM_STARTER } = load(['tmBuildModel', 'TM_STARTER']);
+  const { model, errors, warnings } = tmBuildModel(TM_STARTER);
+  assert.deepEqual([...errors, ...warnings], []);
+  assert.deepEqual(model.findings, []);
+});

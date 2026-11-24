@@ -6,10 +6,20 @@
 
 const TM_ICON_SIZE = 18;
 
-/** Obsidian's icon for a Lucide name, as an SVG element, or null when it has none. */
+// Lucide renames icons now and then, and Obsidian's copy may be older or newer than the names the plugin uses itself
+// (the defaults in icons.js): each of those names, with its other name
+const TM_ICON_RENAMED = {
+  'shield-alert': 'shield-exclamation-point',
+  'shield-exclamation-point': 'shield-alert',
+  'building-2': 'building-complex',
+  'building-complex': 'building-2',
+};
+
+/** Obsidian's icon for a Lucide name (or its other name, if Lucide renamed it), as an SVG element, or null. */
 function tmLucide(name) {
   try {
-    return getIcon(name) || getIcon(`lucide-${name}`);
+    const other = TM_ICON_RENAMED[name];
+    return getIcon(name) || getIcon(`lucide-${name}`) || (other && (getIcon(other) || getIcon(`lucide-${other}`))) || null;
   } catch {
     return null;
   }

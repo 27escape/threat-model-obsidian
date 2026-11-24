@@ -1,0 +1,163 @@
+/* The web app's stand-in for Obsidian's theme: the CSS variables the plugin's styles use, with values close to
+   Obsidian's default theme, in light and dark (following the system setting). Pele takes its colours from these too. */
+
+:root {
+  color-scheme: light dark;
+  --font-text: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-monospace: ui-monospace, SFMono-Regular, 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --font-ui-smaller: 12px;
+  --font-ui-small: 13px;
+  --font-ui-medium: 15px;
+  --code-size: 13px;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --size-2-1: 2px;
+  --size-2-2: 4px;
+  --size-2-3: 6px;
+  --size-4-1: 4px;
+  --size-4-2: 8px;
+  --size-4-3: 12px;
+  --size-4-4: 16px;
+  --size-4-6: 24px;
+  --size-4-8: 32px;
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+
+  --mono-rgb-0: 255, 255, 255;
+  --mono-rgb-100: 0, 0, 0;
+  --color-red-rgb: 233, 49, 71;
+  --color-red: #e93147;
+  --color-orange: #ec7500;
+  --color-yellow: #e0ac00;
+  --color-green: #08b94e;
+  --color-blue-rgb: 8, 109, 221;
+  --color-blue: #086ddd;
+  --color-purple: #7852ee;
+
+  --background-primary: #ffffff;
+  --background-secondary: #f6f6f6;
+  --background-modifier-border: #e0e0e0;
+  --background-modifier-hover: rgba(0, 0, 0, 0.06);
+  --text-normal: #222222;
+  --text-muted: #5c5c5c;
+  --text-faint: #ababab;
+  --text-error: #e93147;
+  --text-warning: #ec7500;
+  --text-on-accent: #ffffff;
+  --text-selection: rgba(8, 109, 221, 0.2);
+  --text-highlight-bg: rgba(255, 208, 0, 0.4);
+  --interactive-normal: #f2f2f2;
+  --interactive-hover: #e9e9e9;
+  --interactive-accent: #7852ee;
+  --interactive-accent-hover: #8a6af0;
+
+  --code-background: #fafafa;
+  --code-normal: #5c5c5c;
+  --code-comment: #ababab;
+  --code-function: #c8a200;
+  --code-important: #ec7500;
+  --code-keyword: #d53984;
+  --code-operator: #e93147;
+  --code-property: #00a7b5;
+  --code-punctuation: #5c5c5c;
+  --code-string: #0ca84a;
+  --code-tag: #e93147;
+  --code-value: #7852ee;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mono-rgb-0: 0, 0, 0;
+    --mono-rgb-100: 255, 255, 255;
+    --color-red-rgb: 251, 70, 76;
+    --color-red: #fb464c;
+    --color-orange: #e9973f;
+    --color-yellow: #e0de71;
+    --color-green: #44cf6e;
+    --color-blue-rgb: 2, 122, 255;
+    --color-blue: #4b8eef;
+    --color-purple: #a882ff;
+
+    --background-primary: #1e1e1e;
+    --background-secondary: #262626;
+    --background-modifier-border: #363636;
+    --background-modifier-hover: rgba(255, 255, 255, 0.075);
+    --text-normal: #dadada;
+    --text-muted: #b3b3b3;
+    --text-faint: #666666;
+    --text-error: #fb464c;
+    --text-warning: #e9973f;
+    --text-selection: rgba(75, 142, 239, 0.3);
+    --interactive-normal: #2a2a2a;
+    --interactive-hover: #303030;
+    --interactive-accent: #8a5cf5;
+    --interactive-accent-hover: #9a70f7;
+
+    --code-background: #242424;
+    --code-normal: #b3b3b3;
+    --code-comment: #666666;
+    --code-function: #e5b567;
+    --code-important: #e9973f;
+    --code-keyword: #fa99cd;
+    --code-operator: #fb464c;
+    --code-property: #53dfdd;
+    --code-punctuation: #b3b3b3;
+    --code-string: #44cf6e;
+    --code-tag: #fb464c;
+    --code-value: #a882ff;
+  }
+}
+
+/* Pele's colours from the theme, as Obsidian sets them */
+.mermaid {
+  --pele-bg: var(--background-primary);
+  --pele-fg: var(--text-normal);
+  --pele-muted: var(--text-muted);
+  --pele-line: var(--text-muted);
+  --pele-surface: var(--background-secondary);
+  --pele-surface-alt: var(--background-modifier-hover);
+  --pele-border: var(--background-modifier-border);
+  --pele-accent: var(--interactive-accent);
+  --pele-font: var(--font-text);
+  --pele-radius: var(--radius-s);
+}
+
+/* Obsidian's own look for the plugin's buttons and lists */
+button,
+select {
+  font: inherit;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  background: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 4px 10px;
+  cursor: pointer;
+}
+button:hover,
+select:hover {
+  background: var(--interactive-hover);
+}
+button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+button.mod-cta:hover {
+  background: var(--interactive-accent-hover);
+}
+button.mod-warning {
+  background: var(--color-red);
+  color: #fff;
+  border-color: transparent;
+}
+button.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}

@@ -99,8 +99,12 @@ user -> web "Signs in"
 web -> api "POST /login" {
   protocol = "HTTPS"
   data = ["Email #pii", "Password #secret"]
-  threat T01 "Password guessing against the login" #S #high { score = 7.5 }
+  threat T01 "Password guessing against the login" #S {
+    likelihood = "likely"
+    impact = "major"
+    mitigation = "Rate limiting, and a second factor"
+  }
 }
-api -> db "Reads the account" { data = ["Password hash #secret"] }
-api -> web "Session cookie" { data = ["Session ID #secret"] }
+api -> db "Reads the account" { protocol = "TLS"  data = ["Password hash #secret"] }
+api -> web "Session cookie" { protocol = "HTTPS"  data = ["Session ID #secret"] }
 `;

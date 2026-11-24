@@ -5,15 +5,30 @@ chat; update it when something here changes.
 
 ## Released
 
-- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0 and 0.2.0. 0.2.0 dropped the `.flow` kind names
-  and added default icons, the untrusted-zone shield and the padlock on sensitive data.
+- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0 and 0.2.1. 0.2.0 dropped the `.flow` kind
+  names and added default icons, the untrusted-zone shield and the padlock on sensitive data; 0.2.1 fixed the settings
+  page (only the first three settings showed in 0.2.0; now tested) and gave `.threat` tabs the plugin's own icon,
+  `shield-half`.
 - **In Obsidian's community plugin list** since 0.2.0: https://community.obsidian.md/plugins/threat-model (review
   passed). The listing shows no plugin icon; the plugin's own icon (`shield-half`) is on the tab of a `.threat` file.
-- **0.2.1 is ready to release** (`docs/release-notes/0.2.1.md`): fixes the settings page, which in 0.2.0 showed only
-  the first three settings (a misplaced bracket in `settings.js`; now tested); and the `.threat` tab icon changed from
-  `shield-alert` (which now means an untrusted zone) to `shield-half`. Release with `tools/release.sh 0.2.1`.
+- **0.2.2 is ready to release** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the
+  web app (idea 12, first stage), the starter model without warnings, and icon names that survive Lucide's renames.
+  Release with `tools/release.sh 0.2.2`. For the web app to go live, switch GitHub Pages on once (Settings → Pages →
+  Source: GitHub Actions); `.github/workflows/pages.yml` then publishes it for each release tag (or run it by hand).
 
 ## Decided
+
+- **Web app first, then point-and-click in Obsidian** (ideas 9 and 12; the web app's first stage is built: text,
+  diagrams, examples, My models, export; next is the edit engine). One repo, one build
+  with a second file list. Order: a standalone page (text editor, live diagrams, threat register, export as a
+  `.threat` file or a `threat` code block, report as Markdown); then an edit engine (source positions; change, add or
+  remove one statement, keeping comments and layout) as a plain module; then point-and-click forms in the page; then
+  the same engine and forms in Obsidian (forms draw into any container, styled with Obsidian's CSS variable names).
+  The page offers example models to try (Newsletter sign-up, Customer portal sign-in, Online shop), and keeps the
+  user's own, named, in the browser's local storage, with download and open to move them in and out. Nothing is sent
+  anywhere. Its limits are stated in the page (an *About* panel, and a one-line note by *My models*) and in a README
+  section: models stay in one browser on one device, clearing site data or a private window loses them, *Download*
+  is the backup, and it is best used from its web address (GitHub Pages) rather than opened from disk.
 
 - **Rating threats:** one way per threat. Likelihood × impact is the main way (with a residual rating after controls);
   a risk tag (`#high`) is the quick way; a CVSS vector is only for a threat that is a known vulnerability. `score = …`
@@ -54,7 +69,8 @@ Not agreed; each wants a conversation before any work.
    with a richer diagram editor. Constraints here: the model stays text; a save changes only the statement edited
    (keeping the user's comments and layout) and only when the user saves; never the note being typed in.
 10. CLI to generate diagrams and reports from .threat files
-11. claude or AI skill that can be used elsewhere to be able to generate threat diagrams from a photo or image etc
+11. ~~An AI skill to draft models from a photo or a description~~: done, in `skills/threat-model/` (see *Released*).
+12. **A standalone web app** for writing models and exporting them: see *Decided*.
 
 
 ## Checks to run

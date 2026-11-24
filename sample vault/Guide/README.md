@@ -7,6 +7,8 @@ An Obsidian plugin for writing threat models in your notes. You describe a syste
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
 > [!NOTE]
+> **0.2.2:** a web app, at https://27escape.github.io/threat-model-obsidian/; a skill for an AI such as Claude, to draft a threat model from a photo of a diagram or from your description; and two small fixes. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.2.md).
+>
 > **0.2.1:** the settings missing from the settings page in 0.2.0 are back, and a `.threat` file's tab has the plugin's own icon, `shield-half`. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.1.md).
 >
 > **0.2.0:** default icons, marks for untrusted zones and sensitive data, and the old `.flow` words (`io`, `function`, `database`, `boundary`) are gone. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.0.md).
@@ -79,6 +81,19 @@ The text of a threat model is coloured as you type: keywords, names, attributes,
 A file ending `.threat` opens as a threat model of its own. The pencil button at the top of the view switches to its text.
 
 To edit `.threat` files outside Obsidian, in VS Code for example, a PlantUML extension gives some syntax highlighting once the `.threat` extension is associated with it (*Change Language Mode* → *Configure File Association for '.threat'*). It isn't the same language, so the colours are approximate.
+
+## The web app
+
+The same models and diagrams in a web page, for trying the language without Obsidian, or for people who don't use it: **https://27escape.github.io/threat-model-obsidian/**. The diagrams fill the page, with the model's text beside them as you write (*Code* hides it, to give the diagrams the whole width), and the same views, threat register, findings and key as in Obsidian. *Report* downloads the report as a Markdown file.
+
+- **The models menu** (the model's name, at the top) lists **examples** to open and change, and **My models**: your own, each with a name you choose. *New* starts one, *Open* reads a `.threat` file (or the first model in a Markdown note), and *Save a copy* keeps your changes to an example.
+- **To Obsidian:** *Download* saves the model as a `.threat` file to drop into your vault, and *Copy as code block* copies it as a `threat` code block to paste into a note.
+- **Nothing leaves your browser.** The page is one self-contained file that makes no connections (its security policy forbids them) and works offline once loaded.
+- **Your models are kept in this browser only**, on this device. They don't follow you to another browser or computer, clearing the site's data deletes them, and a private window forgets them when it closes. *Download* is your backup. Use the page from its web address: opened as a file from your computer, some browsers won't let it save.
+
+## Drafting a model with an AI
+
+[`skills/threat-model/`](https://github.com/27escape/threat-model-obsidian/blob/main/skills/threat-model/SKILL.md) is a skill (instructions for an AI such as Claude) for drafting a model from a photo of a whiteboard or diagram, or from you describing the system. It asks about what it can't read, plays the system back to you before writing, suggests threats with STRIDE per element, and marks the model as a draft with every suggested threat labelled for you to review. To use it with Claude, add it as a skill in Claude's settings, or copy the folder into a project's `.claude/skills/` for Claude Code. Other AI tools can be given `SKILL.md` as instructions.
 
 ## Commands
 
