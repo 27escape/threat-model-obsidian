@@ -24,6 +24,9 @@ chat; update it when something here changes.
 
 ## Decided
 
+- **Point and click in Obsidian, next** (24 November 2026): the editor panel in the right sidebar, an *Edit* switch on
+  each block (off unless turned on), with the problems list, *Show in text* and *Open in the web editor*; undo is
+  Obsidian's own. The plan, in stages: [`docs/editor-in-obsidian.md`](editor-in-obsidian.md).
 - **Web app first, then point-and-click in Obsidian** (ideas 9 and 12). Built: the web app's first
   stage (diagrams, text, the models menu, export), the edit engine (`edit.js`, `edit-threat.js`) and point and click
   in the web app for threats (rated by likelihood × impact, a risk tag or a CVSS vector), elements, zones (with new zones), flows and controls (`threat-form.js`, `web/edit-panel.js`,
