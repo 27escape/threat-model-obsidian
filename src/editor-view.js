@@ -91,10 +91,10 @@ class TmEditorView extends ItemView {
     this.hint.empty();
     if (!this.block) {
       this.hint.createEl('p', { text: 'Turn on Edit in a threat diagram’s bar to change the model here.' });
-      this.hint.createEl('p', { cls: 'tw-note', text: 'Then click a box, a zone, an arrow or a threat on the diagram, or use Add above.' });
+      this.hint.createEl('p', { cls: 'tw-note', text: 'Then click a box, a zone, an arrow or a threat on the diagram, or use Add or Model above.' });
       return;
     }
-    this.hint.createEl('p', { text: 'Click a box, a zone, an arrow or a threat on the diagram, or use Add above.' });
+    this.hint.createEl('p', { text: 'Click a box, a zone, an arrow or a threat on the diagram, or use Add or Model above.' });
   }
 
   drawBar() {
@@ -107,11 +107,22 @@ class TmEditorView extends ItemView {
     const file = block.sourcePath ? block.sourcePath.replace(/^.*\//, '').replace(/\.md$/, '') : '';
     if (file && file !== block.model.title) where.createSpan({ cls: 'tm-editor-file', text: ` in ${file}` });
     const tools = bar.createDiv({ cls: 'tm-editor-tools' });
-    const add = twButton(tools, 'Add', 'Add something to the model', (e) => this.addMenu(e), 'plus');
-    add.addClass('mod-cta');
-    twButton(tools, 'Zones', 'The model’s zones', () => this.panel.showZones(), 'square-dashed');
-    twButton(tools, 'Controls', 'The model’s controls', () => this.panel.showControls(), 'shield-check');
-    twButton(tools, 'Scenarios', 'The model’s scenarios', () => this.panel.showScenarios(), 'list-ordered');
+    // as in the web app's top bar: Add and Model menus, the problems count, and (here) the web editor
+    const menuButton = (text, tip, icon, fill) => {
+      const b = twButton(tools, text, tip, (e) => this.dropMenu(b, fill), icon);
+      b.addClass('tm-editor-menu');
+      const chevron = b.createSpan({ cls: 'tm-editor-chevron' });
+      setIcon(chevron, 'chevron-down');
+      return b;
+    };
+    menuButton('Add', 'Add something to the model', 'plus', (item, line) => this.addItems(item, line)).addClass('mod-cta');
+    menuButton('Model', 'The model’s zones, controls, scenarios and problems', 'layers', (item) => {
+      item('Zones', 'square-dashed', () => this.panel.showZones());
+      item('Controls', 'shield-check', () => this.panel.showControls());
+      item('Scenarios', 'list-ordered', () => this.panel.showScenarios());
+      item('Problems', 'circle-alert', () => this.panel.showProblems());
+    });
+    twButton(tools, '', 'Open this model in the web editor, in your browser (nothing is uploaded: the model travels in the link)', () => this.openInWebEditor(), 'external-link');
     const n = this.problemCount();
     const problems = twButton(tools, n ? String(n) : '', n ? `${n} problem${n === 1 ? '' : 's'}: errors, warnings and findings` : 'No problems', () => this.panel.showProblems(), 'circle-alert');
     problems.addClass('tm-editor-problems');
@@ -124,17 +135,23 @@ class TmEditorView extends ItemView {
     return b.errors.length + b.warnings.length + (b.model && b.model.findings ? b.model.findings.length : 0);
   }
 
-  addMenu(e) {
+  /** A menu dropping down from a button in the bar; fill(item, line) adds its items. Escape or a click away closes it. */
+  dropMenu(button, fill) {
     const menu = new Menu();
     const item = (title, icon, run) => menu.addItem((i) => i.setTitle(title).setIcon(icon).onClick(run));
+    fill(item, () => menu.addSeparator());
+    const r = button.getBoundingClientRect();
+    menu.showAtPosition({ x: r.left, y: r.bottom + 4 });
+  }
+
+  addItems(item, line) {
     item('Element…', 'box', () => this.panel.newElement());
     item('Flow…', 'arrow-right', () => this.panel.newFlow());
     item('Zone…', 'square-dashed', () => this.panel.newZone());
-    menu.addSeparator();
+    line();
     item('Threat to the whole model…', 'triangle-alert', () => this.panel.newThreat({ type: 'model' }, 'Whole model', null));
     item('Control…', 'shield-check', () => this.panel.showControl(null));
     item('Scenario…', 'list-ordered', () => this.panel.showScenario(null));
-    menu.showAtMouseEvent(e);
   }
 }
 
@@ -183,10 +200,9 @@ Object.assign(ThreatModelPlugin.prototype, {
     this.editing = null;
     const again = [...this.liveBlocks].find((b) => b !== block && b.state && b.state.key === this.editingKey);
     if (again) return this.editingRedrawn(again);
-    // drawn again within a moment: editingRedrawn picks it up; otherwise editing stops
-    window.setTimeout(() => {
-      if (!this.editing && this.editingKey) this.stopEditing();
-    }, 1500);
+    // Not drawn now (in Live Preview, the cursor is in its code): the editor keeps working from the model as it was,
+    // and a change is still written only if the code is still that; it picks the block up again when it is drawn.
+    // Opening another file closes the editor (editingFileOpened).
   },
 
   /**

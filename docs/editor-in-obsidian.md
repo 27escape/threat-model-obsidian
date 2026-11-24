@@ -62,7 +62,7 @@ that), the report shown in a page (the plugin saves the report as a note), the w
 3. **Writing** (built 24 November 2026: `note-write.js`, `writeModel` in `editor-view.js`, `setModelText` and Undo/Redo in `file-view.js`; tests in `test/note-write.test.mjs` and `test/editor-view.test.mjs`; blocks in callouts and lists are supported): the write-back above for notes and `.threat` files, with unit tests for finding and replacing a block
    (several blocks in a note, the note changed meanwhile, CRLF line endings, a block in a list or a callout,
    indented with `> `), and the panel following the redrawn block.
-4. **Extras:** problems list and go-to-line, *Show in text*, *Open in the web editor*.
+4. **Extras** (built 24 November 2026: `editor-goto.js`, `share-link.js` shared with the web app, the *Open this threat model in the web editor* command and the editor's link button; tests in `test/editor-goto.test.mjs`; while the cursor is in a block's code in Live Preview, the block isn't drawn and the editor keeps working from the model as it was): problems list and go-to-line, *Show in text*, *Open in the web editor*.
 5. **Docs and release** (first: put back the sample vault's notes changed while trying the editor, `git restore -- "sample vault"`; `tools/release.sh` refuses a working tree with changes, but a committed test edit would slip through): README (the *Edit* switch, the panel, screenshots), release notes, `architecture.md`.
 
 ## Open questions

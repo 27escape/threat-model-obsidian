@@ -60,6 +60,17 @@ class ThreatModelPlugin extends Plugin {
       editorCallback: (editor) => editor.replaceSelection('```threat\n' + TM_STARTER + '```\n'),
     });
     this.addCommand({
+      id: 'open-in-web-editor',
+      name: 'Open this threat model in the web editor',
+      checkCallback: (checking) => {
+        const view = this.app.workspace.getActiveViewOfType(TmFileView) || this.app.workspace.getActiveViewOfType(MarkdownView);
+        const text = view instanceof TmFileView ? view.data : view && view.editor ? tmFirstBlock(view.editor.getValue()) : null;
+        if (checking) return !!text;
+        const model = tmBuildModel(text).model;
+        tmOpenInWebEditor(text, (model && model.title) || (view.file ? view.file.basename : ''));
+      },
+    });
+    this.addCommand({
       id: 'save-report-note',
       name: 'Open the threat report of this note as a new note',
       editorCheckCallback: (checking, editor, view) => {

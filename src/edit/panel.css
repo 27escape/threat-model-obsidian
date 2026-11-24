@@ -59,6 +59,21 @@
 }
 .tw-threat-title {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* in Obsidian a button keeps to one line of fixed height: these rows wrap their text instead */
+.tw-panel .tw-threat {
+  height: auto;
+  min-height: var(--input-height, 30px);
+  white-space: normal;
+  justify-content: flex-start;
+  text-align: left;
+  line-height: 1.4;
+  padding: 6px 10px;
+}
+.tw-panel {
+  overflow-x: hidden;
 }
 .tw-threat .tm-threat-id {
   font-family: var(--font-monospace);

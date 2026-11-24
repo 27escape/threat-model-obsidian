@@ -3,36 +3,14 @@
 
 // ---- links: the model compressed into the address, after "#" (which browsers never send to a website)
 
-const TW_SHARE_KEY = 'model';
-
-const twB64url = (bytes) => {
-  let s = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-};
-const twFromB64url = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
-
-async function twSqueeze(bytes, how) {
-  const stream = new Blob([bytes]).stream().pipeThrough(how === 'in' ? new CompressionStream('deflate-raw') : new DecompressionStream('deflate-raw'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-/** The page's address with the model (and a name for it) in it. */
-async function twShareLink(text, name) {
-  const json = new TextEncoder().encode(JSON.stringify({ n: name, t: text }));
-  const packed = typeof CompressionStream === 'function' ? `z${twB64url(await twSqueeze(json, 'in'))}` : `p${twB64url(json)}`;
-  return `${location.href.replace(/#.*$/, '')}#${TW_SHARE_KEY}=${packed}`;
-}
+/** The page's address with the model (and a name for it) in it (share-link.js). */
+const twShareLink = (text, name) => tmShareLink(text, name, location.href);
 
 /** The model in the page's address, if it was opened from a link: { name, text }, or null. */
 async function twSharedFromAddress() {
-  const m = new RegExp(`^#${TW_SHARE_KEY}=([zp])([A-Za-z0-9_-]+)$`).exec(location.hash);
-  if (!m) return null;
   try {
-    const bytes = twFromB64url(m[2]);
-    const json = JSON.parse(new TextDecoder().decode(m[1] === 'z' ? await twSqueeze(bytes, 'out') : bytes));
-    if (typeof json.t !== 'string') return null;
-    return { name: `Shared: ${String(json.n || 'model').slice(0, TW_NAME_MAX - 8)}`, text: json.t };
+    const shared = await tmReadShareLink(location.hash);
+    return shared && { name: `Shared: ${shared.name.slice(0, TW_NAME_MAX - 8)}`, text: shared.text };
   } catch {
     new Notice('That link’s model couldn’t be read: it may have been cut short.');
     return null;
@@ -41,7 +19,7 @@ async function twSharedFromAddress() {
 
 /** Take the model out of the address once something else is shown, so a reload doesn't bring it back. */
 function twClearShared() {
-  if (location.hash.startsWith(`#${TW_SHARE_KEY}=`)) history.replaceState(null, '', location.href.replace(/#.*$/, ''));
+  if (location.hash.startsWith(`#${TM_SHARE_KEY}=`)) history.replaceState(null, '', location.href.replace(/#.*$/, ''));
 }
 
 // ---- pictures: the diagram as it is drawn, its look written into it so it stands alone

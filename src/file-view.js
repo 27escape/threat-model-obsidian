@@ -69,6 +69,7 @@ class TmFileView extends TextFileView {
       const under = wrap.createEl('pre', { cls: 'tm-source tm-source-under tm-hl' });
       under.setAttr('aria-hidden', 'true');
       const ta = wrap.createEl('textarea', { cls: 'tm-source tm-source-over' });
+      this.ta = ta;
       ta.value = this.data || '';
       ta.spellcheck = false;
       // a final newline keeps the last line's height when the text ends with one
@@ -104,6 +105,21 @@ class TmFileView extends TextFileView {
     this.refresh();
     this.showUndo();
     return '';
+  }
+
+  /** Show the text, with [from, to) selected and in view (from the Threat model editor). */
+  selectText(from, to) {
+    if (!this.editing) {
+      this.editing = true;
+      this.refresh();
+    }
+    const ta = this.ta;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(from, to);
+    const line = ta.value.slice(0, from).split('\n').length - 1;
+    const height = parseFloat(window.getComputedStyle(ta).lineHeight) || 20;
+    ta.scrollTop = Math.max(0, line * height - ta.clientHeight / 3);
   }
 
   undoRedo(which) {
