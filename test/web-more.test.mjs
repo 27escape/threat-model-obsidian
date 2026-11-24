@@ -1,4 +1,4 @@
-// The web app's new elements, flows and scenarios (src/web/add-edits.js), its undo history (src/web/history.js),
+// The web app's new elements, flows and scenarios (src/edit/add-edits.js), its undo history (src/edit/history.js),
 // the earlier versions kept by the store (src/web/store.js) and the threat register as CSV (src/web/export.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,7 +8,7 @@ import { load } from './load.mjs';
 
 const W = load(
   ['tmBuildModel', 'tmEditParse', 'twAddElement', 'twAddFlow', 'twAddScenario', 'twEditScenario', 'twDeleteScenario', 'twRegisterCsv', 'TwHistory'],
-  ['src/web/item-edits.js', 'src/web/add-edits.js', 'src/web/export.js', 'src/web/history.js']
+  ['src/edit/item-edits.js', 'src/edit/add-edits.js', 'src/web/export.js', 'src/edit/history.js']
 );
 const builds = (text) => {
   assert.deepEqual(W.tmBuildModel(text).errors, [], text);

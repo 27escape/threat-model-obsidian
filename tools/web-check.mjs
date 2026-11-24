@@ -165,11 +165,12 @@ await pause();
 const zoneBox = await p.$('.tw-view .pele-cluster.tmZone > rect');
 if (!zoneBox) fail('the Structure view draws no zones');
 else {
+  await zoneBox.scrollIntoViewIfNeeded();
   const zb = await zoneBox.boundingBox();
   await p.mouse.click(zb.x + 6, zb.y + 40);
   await pause(200);
-  if (!/Zone/.test(await p.textContent('.tw-panel .tw-panel-kind').catch(() => ''))) fail('a zone on the Structure view does not open the zone');
-  await p.click('.tw-panel-head button');
+  if (!(await p.isVisible('.tw-panel')) || !/Zone/.test(await p.textContent('.tw-panel .tw-panel-kind'))) fail('a zone on the Structure view does not open the zone');
+  if (await p.isVisible('.tw-panel')) await p.click('.tw-panel-head button');
   await p.click('.tm-toggle >> text=Zones');
   await pause();
   if (await p.$('.tw-view .pele-cluster.tmZone')) fail('the Zones switch does not take the zones away');

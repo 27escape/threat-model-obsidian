@@ -1,5 +1,5 @@
-// The web app's edits to elements, zones, flows and controls (src/web/item-edits.js), and the forms' starting values
-// (src/web/item-forms.js): only what changed is written, and a form saved unchanged changes nothing.
+// The web app's edits to elements, zones, flows and controls (src/edit/item-edits.js), and the forms' starting values
+// (src/edit/item-forms.js): only what changed is written, and a form saved unchanged changes nothing.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -7,7 +7,7 @@ import { load } from './load.mjs';
 
 const W = load(
   ['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditElement', 'twEditZone', 'twEditFlow', 'twEditControl', 'twAddControl', 'twDeleteControl', 'twNextId', 'twElementSpec', 'twZoneSpec', 'twFlowSpec', 'twControlSpec', 'twFromYesNo'],
-  ['src/web/item-edits.js', 'src/web/item-forms.js']
+  ['src/edit/item-edits.js', 'src/edit/item-forms.js']
 );
 
 const SRC = `zone web "Web" { trust = "untrusted" }
@@ -107,7 +107,7 @@ test('web edits: every form of every sample model, saved as it opens, changes no
   assert.ok(n > 60);
 });
 
-const R = load(['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditThreat', 'twAddThreat', 'twSetRating', 'twAddZone', 'twDeleteZone', 'twIdFrom', 'tmThreatFields'], ['src/web/item-edits.js', 'src/web/item-forms.js', 'src/web/threat-form.js']);
+const R = load(['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditThreat', 'twAddThreat', 'twSetRating', 'twAddZone', 'twDeleteZone', 'twIdFrom', 'tmThreatFields'], ['src/edit/item-edits.js', 'src/edit/item-forms.js', 'src/edit/threat-form.js']);
 const RATED = `zone web "Web"
 person u "U" { zone = web }
 container a "A"

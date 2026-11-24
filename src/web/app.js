@@ -93,6 +93,11 @@ class TwApp {
   }
 
   /** Show or hide the text; hidden, the diagrams have the whole width. Remembered in this browser. */
+  /** The edit panel opened or closed (it takes the text's place). The page is the panel's host: see edit-panel.js. */
+  opened(on) {
+    this.root.toggleClass('tw-panel-open', on);
+  }
+
   showCode(on) {
     this.codeShown = !!on;
     this.root.toggleClass('tw-no-code', !on);

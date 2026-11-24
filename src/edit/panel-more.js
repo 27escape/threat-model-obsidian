@@ -4,7 +4,7 @@ Object.assign(TwEditPanel.prototype, {
   /** A small "Show in text" button at the top of the panel, selecting the statement in the editor. */
   inText(ref) {
     const row = this.body.createDiv({ cls: 'tw-panel-row' });
-    twButton(row, 'Show in text', 'Select its statement in the model’s text', () => this.app.showInText(ref), 'text-cursor-input');
+    twButton(row, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText(ref), 'text-cursor-input');
     return row;
   },
 
@@ -33,7 +33,7 @@ Object.assign(TwEditPanel.prototype, {
         let added = null;
         return this.apply(
           () => {
-            added = twAddElement(this.app.text, v);
+            added = twAddElement(this.host.text, v);
             return added.text;
           },
           () => this.showItem({ type: 'element', id: added.id }, `Added ${v.title.trim()}`)
@@ -67,7 +67,7 @@ Object.assign(TwEditPanel.prototype, {
         let added = null;
         return this.apply(
           () => {
-            added = twAddFlow(this.app.text, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) });
+            added = twAddFlow(this.host.text, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) });
             return added.text;
           },
           () => this.showItem({ type: 'flows', ns: [added.n] }, `Added flow ${added.n}`)
@@ -162,7 +162,7 @@ Object.assign(TwEditPanel.prototype, {
     if (id) {
       buttons.createEl('button', { type: 'button', cls: 'mod-warning tm-form-delete', text: 'Delete' }).addEventListener('click', async () => {
         if (!(await twConfirm(`Delete the scenario ${s.title || id}?`, 'Its steps go with it; the flows stay.', 'Delete'))) return;
-        const said2 = this.apply(() => twDeleteScenario(this.app.text, id), () => this.showScenarios(`Deleted ${s.title || id}`));
+        const said2 = this.apply(() => twDeleteScenario(this.host.text, id), () => this.showScenarios(`Deleted ${s.title || id}`));
         if (said2) this.say(said2);
       });
     }
@@ -180,10 +180,10 @@ Object.assign(TwEditPanel.prototype, {
       let added = null;
       problem.setText(
         id
-          ? this.apply(() => twEditScenario(this.app.text, id, { title: title.value, steps: list }), () => this.showScenario(id, 'Saved'))
+          ? this.apply(() => twEditScenario(this.host.text, id, { title: title.value, steps: list }), () => this.showScenario(id, 'Saved'))
           : this.apply(
               () => {
-                added = twAddScenario(this.app.text, { title: title.value, id: idIn.value, steps: list });
+                added = twAddScenario(this.host.text, { title: title.value, id: idIn.value, steps: list });
                 return added.text;
               },
               () => this.showScenario(added.id, `Added ${title.value.trim()}`)
@@ -195,12 +195,12 @@ Object.assign(TwEditPanel.prototype, {
   // ---- problems
 
   showProblems() {
-    const { errors, warnings, model } = tmBuildModel(this.app.text);
+    const { errors, warnings, model } = tmBuildModel(this.host.text);
     this.showing = { kind: 'problems' };
     this.open('Problems');
     let raw = null;
     try {
-      raw = tmEditParse(this.app.text);
+      raw = tmEditParse(this.host.text);
     } catch {
       // with a syntax error there is no model to find a flow's line in
     }
@@ -212,7 +212,7 @@ Object.assign(TwEditPanel.prototype, {
         const b = list.createEl('li').createEl('button', { type: 'button', cls: `tw-threat ${cls}` });
         if (it.line) b.createSpan({ cls: 'tm-threat-id', text: `Line ${it.line}` });
         b.createSpan({ cls: 'tw-threat-title', text: it.message });
-        if (it.line) b.addEventListener('click', () => this.app.showLine(it.line));
+        if (it.line) b.addEventListener('click', () => this.host.showLine(it.line));
         else b.disabled = true;
       }
     };

@@ -1,22 +1,24 @@
-// Point and click: the panel beside the diagrams (in place of the text while it is open). Click a box, a zone or an
-// arrow to change it and see its threats; click a threat (its ID on a diagram, or its row in the threat register) to
-// change it; Controls, in the top bar, lists the model's controls. Every change goes through the edit engine
-// (edit.js, edit-threat.js, item-edits.js), which changes only what it must in the text, and is refused if it would
-// leave the model with errors it didn't have.
+// Point and click: the panel that edits a model, shared by the web app and (later) the plugin. Click a box, a zone or
+// an arrow to change it and see its threats; click a threat to change it; it also lists the model's zones, controls,
+// scenarios and problems, and adds new things (panel-more.js). Every change goes through the edit engine (edit.js,
+// edit-threat.js, item-edits.js, add-edits.js), which changes only what it must in the text, and is refused if it
+// would leave the model with errors it didn't have. Each build gives it twButton (a button with an icon) and
+// twConfirm (asking before a deletion); the web app's are in app.js and dialogs.js.
 
 class TwEditPanel {
-  constructor(app, parent) {
-    this.app = app;
+  /**
+   * host: what the panel edits, the web page or (later) a block in Obsidian. It gives the model's text and takes a
+   * new one: { text, setText(text), showInText(ref), showLine(n), opened(on) }; opened(on) is told when the panel
+   * opens or closes, to make room for it. Closing with Escape is the host's to arrange.
+   */
+  constructor(host, parent) {
+    this.host = host;
     this.el = parent.createEl('section', { cls: 'tw-panel tm-vars tw-hidden', attr: { 'aria-label': 'Edit' } });
     const head = this.el.createDiv({ cls: 'tw-panel-head' });
     this.heading = head.createEl('h2');
     twButton(head, '', 'Close', () => this.close(), 'x').addClass('tw-menu-close');
     this.body = this.el.createDiv({ cls: 'tw-panel-body' });
     this.showing = null; // what the panel shows, to show it again after a change
-    this.onKey = (e) => {
-      if (e.key === 'Escape' && this.isOpen() && !document.querySelector('dialog[open]') && !this.app.menu.isOpen()) this.close();
-    };
-    document.addEventListener('keydown', this.onKey);
   }
 
   isOpen() {
@@ -26,7 +28,7 @@ class TwEditPanel {
   open(heading, said) {
     this.heading.setText(heading);
     this.el.removeClass('tw-hidden');
-    this.app.root.addClass('tw-panel-open');
+    this.host.opened(true);
     this.body.empty();
     this.el.scrollTop = 0;
     if (said) this.body.createDiv({ cls: 'tw-panel-said', text: said });
@@ -34,15 +36,15 @@ class TwEditPanel {
 
   close() {
     this.el.addClass('tw-hidden');
-    this.app.root.removeClass('tw-panel-open');
+    this.host.opened(false);
     this.showing = null;
   }
 
   /** The model as written (with positions) and as built, or null with the reason shown when it can't be edited. */
   models() {
     try {
-      const raw = tmEditParse(this.app.text);
-      const built = tmBuildModel(this.app.text);
+      const raw = tmEditParse(this.host.text);
+      const built = tmBuildModel(this.host.text);
       if (built.errors.length) throw new TmEditError(`line ${built.errors[0].line}: ${built.errors[0].message}`);
       return { raw, model: built.model };
     } catch (e) {
@@ -74,10 +76,10 @@ class TwEditPanel {
     } catch (e) {
       return e.message;
     }
-    const before = tmBuildModel(this.app.text).errors.length;
+    const before = tmBuildModel(this.host.text).errors.length;
     const after = tmBuildModel(text).errors;
     if (after.length > before) return `That would leave the model with an error (line ${after[0].line}: ${after[0].message}).`;
-    if (text !== this.app.text) this.app.setText(text); // saving a form with nothing changed changes nothing
+    if (text !== this.host.text) this.host.setText(text); // saving a form with nothing changed changes nothing
     then();
     return '';
   }
@@ -98,10 +100,10 @@ class TwEditPanel {
       for (const f of flows) {
         const box = this.body.createDiv({ cls: 'tw-panel-section' });
         box.createEl('h3', { text: `(${f.n}) ${tmTitleOf(model, f.from)} → ${tmTitleOf(model, f.to)}` });
-        twButton(box, 'Show in text', 'Select its statement in the model’s text', () => this.app.showInText({ type: 'flow', n: f.n }), 'text-cursor-input').addClass('tw-small');
+        twButton(box, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText({ type: 'flow', n: f.n }), 'text-cursor-input').addClass('tw-small');
         this.details(box, 'Details', flows.length === 1, (el) =>
           twFormInto(el, twFlowSpec(raw.flows[f.n - 1]), {
-            onSave: (v) => this.apply(() => twEditFlow(this.app.text, f.n, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) }), again('Saved')),
+            onSave: (v) => this.apply(() => twEditFlow(this.host.text, f.n, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) }), again('Saved')),
             onCancel: () => this.close(),
             onDelete: () => this.removeFlow(f, model),
           })
@@ -125,7 +127,7 @@ class TwEditPanel {
     const box = this.body.createDiv({ cls: 'tw-panel-section' });
     this.details(box, 'Details', true, (el) =>
       twFormInto(el, isZone ? twZoneSpec(rawThing) : twElementSpec(rawThing, model), {
-        onSave: (v) => this.apply(() => (isZone ? twEditZone(this.app.text, item.id, v) : twEditElement(this.app.text, item.id, v)), again('Saved')),
+        onSave: (v) => this.apply(() => (isZone ? twEditZone(this.host.text, item.id, v) : twEditElement(this.host.text, item.id, v)), again('Saved')),
         onCancel: () => this.close(),
         onDelete: isZone ? () => this.removeZone(thing) : () => this.removeElement(thing, model),
       })
@@ -166,14 +168,14 @@ class TwEditPanel {
     if (flows.length) return this.say(`Delete its flows first: ${flows.map((f) => `(${f.n}) ${tmTitleOf(model, f.from)} → ${tmTitleOf(model, f.to)}`).join(', ')}.`);
     const parts = [inside.size > 1 ? `the ${inside.size - 1} element${inside.size > 2 ? 's' : ''} inside it` : '', e.threats.length ? `its ${e.threats.length} threat${e.threats.length > 1 ? 's' : ''}` : ''].filter(Boolean);
     if (!(await twConfirm(`Delete ${e.title}?`, `It will be taken out of the model${parts.length ? `, with ${parts.join(' and ')}` : ''}.`, 'Delete'))) return;
-    const said = this.apply(() => tmRemoveStatement(this.app.text, { type: 'element', id: e.id }), () => this.close());
+    const said = this.apply(() => tmRemoveStatement(this.host.text, { type: 'element', id: e.id }), () => this.close());
     if (said) this.say(said);
   }
 
   async removeFlow(f) {
     const n = f.threats.length;
     if (!(await twConfirm(`Delete flow ${f.n}?`, `“${f.label || 'This flow'}” will be taken out of the model${n ? `, with the threats written inside it` : ''}. Scenarios that step along it will warn about it.`, 'Delete'))) return;
-    const said = this.apply(() => tmRemoveStatement(this.app.text, { type: 'flow', n: f.n }), () => this.close());
+    const said = this.apply(() => tmRemoveStatement(this.host.text, { type: 'flow', n: f.n }), () => this.close());
     if (said) this.say(said);
   }
 
@@ -209,7 +211,7 @@ class TwEditPanel {
       where: t.where,
       usual,
       controlsOwn: model.controls.filter((c) => (c.covers || []).includes(rawT.id) && !tmThreatFields(rawT).controls.includes(c.id)).map((c) => c.id),
-      onSave: (fields) => this.apply(() => twEditThreat(this.app.text, ref, fields), () => this.showThreat({ id: rawT.id, index }, 'Saved')),
+      onSave: (fields) => this.apply(() => twEditThreat(this.host.text, ref, fields), () => this.showThreat({ id: rawT.id, index }, 'Saved')),
       onCancel: () => this.back(t),
       onDelete: () => this.removeThreat(ref, t),
     });
@@ -232,7 +234,7 @@ class TwEditPanel {
         let added = null;
         return this.apply(
           () => {
-            added = twAddThreat(this.app.text, ref, { ...fields, id });
+            added = twAddThreat(this.host.text, ref, { ...fields, id });
             return added.text;
           },
           () => this.showThreat({ id: added.id }, `Added ${added.id}`)
@@ -245,7 +247,7 @@ class TwEditPanel {
   async removeThreat(ref, t) {
     const yes = await twConfirm(`Delete ${t.id || 'this threat'}?`, `“${t.title}” will be taken out of the model${t.id ? ', and out of any control that covers it' : ''}.`, 'Delete');
     if (!yes) return;
-    const said = this.apply(() => tmDeleteThreat(this.app.text, ref), () => this.back(t));
+    const said = this.apply(() => tmDeleteThreat(this.host.text, ref), () => this.back(t));
     if (said) this.say(said);
   }
 
@@ -259,7 +261,7 @@ class TwEditPanel {
   async removeZone(z) {
     const n = (z.threats || []).length;
     if (!(await twConfirm(`Delete the zone ${z.title}?`, `It will be taken out of the model${n ? `, with the threats written inside it` : ''}.`, 'Delete'))) return;
-    const said = this.apply(() => twDeleteZone(this.app.text, z.id), () => this.showZones(`Deleted ${z.title}`));
+    const said = this.apply(() => twDeleteZone(this.host.text, z.id), () => this.showZones(`Deleted ${z.title}`));
     if (said) this.say(said);
   }
 
@@ -294,7 +296,7 @@ class TwEditPanel {
         let added = null;
         return this.apply(
           () => {
-            added = twAddZone(this.app.text, v);
+            added = twAddZone(this.host.text, v);
             return added.text;
           },
           () => this.showItem({ type: 'zone', id: added.id }, `Added ${v.title.trim()}`)
@@ -338,11 +340,11 @@ class TwEditPanel {
     twFormInto(this.body.createDiv(), twControlSpec(rawC, model), {
       submit: id ? 'Save' : 'Add control',
       onSave: (v) => {
-        if (id) return this.apply(() => twEditControl(this.app.text, id, v), () => this.showControl(id, 'Saved'));
+        if (id) return this.apply(() => twEditControl(this.host.text, id, v), () => this.showControl(id, 'Saved'));
         let added = null;
         return this.apply(
           () => {
-            added = twAddControl(this.app.text, v);
+            added = twAddControl(this.host.text, v);
             return added.text;
           },
           () => this.showControl(added.id, `Added ${added.id}`)
@@ -352,7 +354,7 @@ class TwEditPanel {
       onDelete: id
         ? async () => {
             if (!(await twConfirm(`Delete ${id}?`, `“${rawC.title}” will be taken out of the model, and out of the threats that name it.`, 'Delete'))) return;
-            const said2 = this.apply(() => twDeleteControl(this.app.text, id), () => this.showControls(`Deleted ${id}`));
+            const said2 = this.apply(() => twDeleteControl(this.host.text, id), () => this.showControls(`Deleted ${id}`));
             if (said2) this.say(said2);
           }
         : null,

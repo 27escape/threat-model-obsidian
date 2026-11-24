@@ -59,6 +59,7 @@ Object.assign(TwApp.prototype, {
       const inModel = t === this.editor.ta;
       const typing = t instanceof Element && t.matches('input, textarea, select, [contenteditable]') && !inModel;
       if (document.querySelector('dialog[open]')) return; // a dialog has the keys
+      if (e.key === 'Escape' && this.panel.isOpen() && !this.menu.isOpen()) return this.panel.close(); // the menus close themselves first
       const k = e.key.toLowerCase();
       if (mod && !e.altKey && k === 'z' && !typing) {
         e.preventDefault();

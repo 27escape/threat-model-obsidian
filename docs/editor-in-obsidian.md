@@ -54,7 +54,7 @@ that), the report shown in a page (the plugin saves the report as a note), the w
 
 ## Stages
 
-1. **Move and decouple** (no change for users): `src/edit/` with the host interface; the web app works exactly as
+1. **Move and decouple** (done, 24 November 2026; no change for users): `src/edit/` with the host interface; the web app works exactly as
    now (unit tests, `web-check.mjs`). Plugin `main.js` unchanged.
 2. **The panel in Obsidian, read-only first:** the sidebar view, the *Edit* switch, clicks mapped to items (the
    diagram IDs are already in place), the forms shown but Save turned off. Kevin tries it in the sample vault.
