@@ -75,7 +75,6 @@ class TmBlock extends MarkdownRenderChild {
     this.viewSelect.value = view;
     this.drawExtra();
 
-    const markdown = '```mermaid\n' + this.text() + '\n```';
     if (this.inner) this.removeChild(this.inner);
     this.inner = this.addChild(new Component());
     this.body.empty();
@@ -91,7 +90,7 @@ class TmBlock extends MarkdownRenderChild {
       clear: () => tmShowFootprint(body, null),
     };
     inner.register(tmColourStrideSoon(body, links, true));
-    MarkdownRenderer.render(this.plugin.app, markdown, body, this.sourcePath, inner);
+    tmDrawMermaid(this.text(), body, { app: this.plugin.app, sourcePath: this.sourcePath, component: inner });
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
     tmFindingsInto(this.findings, this.model.findings);
     tmLegendInto(this.legend, this.model, view, overlay, this.plugin.settings.defaultIcons !== false);
