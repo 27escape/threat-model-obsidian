@@ -28,6 +28,7 @@
     "src/note-write.js",
     "src/share-link.js",
     "src/editor-view.js",
+    "src/editor-undo.js",
     "src/editor-goto.js",
     "src/mermaid-draw.js",
     "src/edit/history.js",

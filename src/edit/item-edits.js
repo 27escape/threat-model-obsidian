@@ -211,3 +211,10 @@ function twDeleteZone(text, id) {
   if (naming.length) throw new TmEditError(`put these in another zone first: ${naming.map((e) => e.title || e.id).join(', ')}`);
   return tmRemoveStatement(text, { type: 'zone', id });
 }
+
+/** An element, everything inside it, and the flows given (their numbers), in one change. */
+function twRemoveElement(text, id, flows = []) {
+  // the highest number first, so the numbers of the others stay right
+  for (const n of [...flows].sort((a, b) => b - a)) text = tmRemoveStatement(text, { type: 'flow', n });
+  return tmRemoveStatement(text, { type: 'element', id });
+}

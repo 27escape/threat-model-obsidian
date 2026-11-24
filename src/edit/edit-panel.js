@@ -31,7 +31,7 @@ class TwEditPanel {
     this.el.removeClass('tw-hidden');
     this.host.opened(true);
     this.body.empty();
-    this.el.scrollTop = 0;
+    this.toTop(this.heading);
     if (said) this.body.createDiv({ cls: 'tw-panel-said', text: said });
   }
 
@@ -166,11 +166,15 @@ class TwEditPanel {
       grew = false;
       for (const x of model.elements) if (x.parent && inside.has(x.parent) && !inside.has(x.id)) grew = !!inside.add(x.id);
     }
+    // its flows (to or from it, or anything inside it) go with it, as one change
     const flows = model.flows.filter((f) => inside.has(f.from) || inside.has(f.to));
-    if (flows.length) return this.say(`Delete its flows first: ${flows.map((f) => `(${f.n}) ${tmTitleOf(model, f.from)} → ${tmTitleOf(model, f.to)}`).join(', ')}.`);
-    const parts = [inside.size > 1 ? `the ${inside.size - 1} element${inside.size > 2 ? 's' : ''} inside it` : '', e.threats.length ? `its ${e.threats.length} threat${e.threats.length > 1 ? 's' : ''}` : ''].filter(Boolean);
-    if (!(await twConfirm(`Delete ${e.title}?`, `It will be taken out of the model${parts.length ? `, with ${parts.join(' and ')}` : ''}.`, 'Delete'))) return;
-    const said = this.apply(() => tmRemoveStatement(this.host.text, { type: 'element', id: e.id }), () => this.close());
+    const parts = [
+      inside.size > 1 ? `the ${inside.size - 1} element${inside.size > 2 ? 's' : ''} inside it` : '',
+      flows.length ? `${flows.length === 1 ? 'its flow' : `its ${flows.length} flows`} (${flows.map((f) => `${f.n}: ${tmTitleOf(model, f.from)} → ${tmTitleOf(model, f.to)}`).join('; ')})` : '',
+      e.threats.length ? `its ${e.threats.length} threat${e.threats.length > 1 ? 's' : ''}` : '',
+    ].filter(Boolean);
+    if (!(await twConfirm(`Delete ${e.title}?`, `It will be taken out of the model${parts.length ? `, with ${parts.join(', ')}` : ''}.`, 'Delete'))) return;
+    const said = this.apply(() => twRemoveElement(this.host.text, e.id, flows.map((f) => f.n)), () => this.close());
     if (said) this.say(said);
   }
 
@@ -181,12 +185,18 @@ class TwEditPanel {
     if (said) this.say(said);
   }
 
+  /** Scroll to the top of the panel: the panel itself in the web app, the sidebar around it in Obsidian. */
+  toTop(el) {
+    this.el.scrollTop = 0;
+    if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+  }
+
   /** A problem shown at the top of the panel. */
   say(text) {
     const old = this.body.querySelector('.tw-panel-problem');
     if (old) old.remove();
-    this.body.createDiv({ cls: 'tw-panel-problem', text, attr: { role: 'alert' }, prepend: true });
-    this.el.scrollTop = 0;
+    const box = this.body.createDiv({ cls: 'tw-panel-problem', text, attr: { role: 'alert' }, prepend: true });
+    this.toTop(box);
   }
 
   // ---- a threat's form

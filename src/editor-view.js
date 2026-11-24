@@ -13,6 +13,10 @@ class TmEditorView extends ItemView {
     this.plugin = plugin;
     this.block = null;
     this.pending = null; // text written but not yet drawn again
+    this.done = []; // the editor's changes, to undo (editor-undo.js)
+    this.undone = [];
+    this.scope = new Scope(this.app.scope); // Ctrl+Z and the like while this pane is active
+    this.undoKeys();
   }
 
   getViewType() {
@@ -50,16 +54,9 @@ class TmEditorView extends ItemView {
     return this.block ? this.block.source : '';
   }
 
-  /** Write the panel's change; if it can't be written, say why and show the model as it is. */
+  /** Write the panel's change (editor-undo.js); if it can't be written, say why and show the model as it is. */
   setText(text) {
-    const block = this.block;
-    if (!block) return;
-    const was = this.text;
-    this.pending = text;
-    this.plugin.writeModel(block, was, text).then(
-      (problem) => problem && this.writeFailed(problem),
-      (e) => this.writeFailed(`The change couldn’t be written: ${e && e.message ? e.message : e}`)
-    );
+    this.write(text, 'change');
   }
 
   writeFailed(problem) {
@@ -79,6 +76,7 @@ class TmEditorView extends ItemView {
     const same = this.block && block && this.block.state && block.state && this.block.state.key === block.state.key;
     this.block = block;
     if (!same || (block && this.pending !== null && tmSameCode(block.source, this.pending))) this.pending = null; // drawn with the change
+    if (!same) this.forget(); // another model: nothing of this one's to undo
     if (!this.panel) return;
     this.drawBar();
     if (!block) this.panel.close();
@@ -122,6 +120,9 @@ class TmEditorView extends ItemView {
       item('Scenarios', 'list-ordered', () => this.panel.showScenarios());
       item('Problems', 'circle-alert', () => this.panel.showProblems());
     });
+    this.undoBtn = twButton(tools, '', 'Undo the editor’s last change (Ctrl+Z)', () => this.undoChange(), 'undo-2');
+    this.redoBtn = twButton(tools, '', 'Redo (Ctrl+Shift+Z)', () => this.redoChange(), 'redo-2');
+    this.drawUndo();
     twButton(tools, '', 'Open this model in the web editor, in your browser (nothing is uploaded: the model travels in the link)', () => this.openInWebEditor(), 'external-link');
     const n = this.problemCount();
     const problems = twButton(tools, n ? String(n) : '', n ? `${n} problem${n === 1 ? '' : 's'}: errors, warnings and findings` : 'No problems', () => this.panel.showProblems(), 'circle-alert');

@@ -190,3 +190,66 @@ test('editor: the plugin sets up what blocks need before it registers the block 
   await p.onload();
   assert.ok(checked);
 });
+
+test('editor undo: the editor’s changes are taken back by writing the model as it was, and redone; typing since ends them', async () => {
+  const { TmEditorView } = load(['TmEditorView']);
+  const v = Object.create(TmEditorView.prototype);
+  const written = [];
+  let note = 'person a "A"';
+  Object.assign(v, {
+    pending: null,
+    done: [],
+    undone: [],
+    panel: null,
+    block: { source: note, state: { key: 'k' } },
+    plugin: {
+      writeModel: async (b, was, now) => {
+        written.push(now);
+        note = now;
+        v.block = { source: now, state: { key: 'k' } }; // Obsidian draws the block again
+        v.pending = null;
+        return '';
+      },
+    },
+  });
+  const settle = () => new Promise((r) => setTimeout(r, 0));
+  v.setText('person a "A"\nsystem b "B"');
+  await settle();
+  v.setText('person a "A"\nsystem b "B"\na -> b');
+  await settle();
+  assert.equal(v.done.length, 2);
+  v.undoChange();
+  await settle();
+  assert.equal(note, 'person a "A"\nsystem b "B"');
+  v.undoChange();
+  await settle();
+  assert.equal(note, 'person a "A"');
+  v.undoChange(); // nothing left
+  v.redoChange();
+  await settle();
+  assert.equal(note, 'person a "A"\nsystem b "B"');
+  assert.deepEqual(written, ['person a "A"\nsystem b "B"', 'person a "A"\nsystem b "B"\na -> b', 'person a "A"\nsystem b "B"', 'person a "A"', 'person a "A"\nsystem b "B"']);
+  // typing in the note since: undo would lose it, so it stops
+  v.block = { source: 'person a "A"\nsystem b "Bank"', state: { key: 'k' } };
+  const before = written.length;
+  v.undoChange();
+  await settle();
+  assert.equal(written.length, before, 'nothing written');
+  assert.equal(v.done.length + v.undone.length, 0);
+});
+
+test('editor undo: Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y are the pane’s own keys, left to a field being typed in', () => {
+  const { TmEditorView } = load(['TmEditorView']);
+  const v = Object.create(TmEditorView.prototype);
+  const keys = [];
+  const ran = [];
+  v.scope = { register: (mods, key, fn) => keys.push({ mods: mods.join('+'), key, fn }) };
+  v.undoChange = () => ran.push('undo');
+  v.redoChange = () => ran.push('redo');
+  v.undoKeys();
+  const press = (mods, key) => keys.find((k) => k.mods === mods && k.key === key).fn();
+  assert.equal(press('Mod', 'z'), false, 'handled: Obsidian does nothing more with it');
+  press('Mod+Shift', 'Z');
+  press('Mod', 'y');
+  assert.deepEqual(ran, ['undo', 'redo', 'redo']);
+});

@@ -176,3 +176,11 @@ test('web edits: every threat’s form, saved as it opens, rated as it was, chan
   }
   assert.ok(n > 20);
 });
+
+test('web edits: an element deleted with its flows (and what is inside it), the flows’ numbers kept right', () => {
+  const { twRemoveElement, tmBuildModel } = load(['twRemoveElement', 'tmBuildModel']);
+  const text = 'person u "U"\nsystem s "S" {\n  container w "W"\n}\nstore d "D"\nu -> w "One"\nu -> d "Two"\nw -> d "Three"\n';
+  const out = twRemoveElement(text, 's', [1, 3]);
+  assert.equal(out, 'person u "U"\nstore d "D"\nu -> d "Two"\n');
+  assert.deepEqual(tmBuildModel(out).errors, []);
+});
