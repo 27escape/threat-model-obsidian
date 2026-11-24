@@ -1,5 +1,11 @@
 // Tokens → the raw model: elements, zones, flows, threats, controls and scenarios as written, with line numbers.
 // Names are checked later by tmBuildModel (model.js); this file only knows the grammar (docs/language.md).
+// Each statement also records where it is in the text, for edits that change only what they must (edit.js):
+//   .src = { from, to, head, title, tags, block }: the whole statement; head, the end of its header (after the
+//          title and tags); title { from, to } (the string, quotes included) or null; tags [{ value, from, to }];
+//          block { open, close } (the offsets of "{" and "}") or null
+//   .attrSpans = { key: { from, to, valueFrom, valueTo, comma } }: each attribute, key to value; comma, the offset
+//          of a "," after it, or null. The model's own attributes are in the raw model's attrSpans.
 
 const TM_KINDS = ['person', 'external', 'system', 'container', 'component', 'store', 'queue'];
 const TM_ZONE_WORDS = ['zone'];
@@ -16,7 +22,7 @@ class TmParser {
   constructor(tokens) {
     this.t = tokens;
     this.i = 0;
-    this.m = { attrs: {}, attrLines: {}, elements: [], zones: [], flows: [], threats: [], controls: [], scenarios: [] };
+    this.m = { attrs: {}, attrLines: {}, attrSpans: {}, elements: [], zones: [], flows: [], threats: [], controls: [], scenarios: [] };
   }
 
   peek(n = 0) {
@@ -32,6 +38,11 @@ class TmParser {
     if (tok.kind === 'string') return 'a string';
     if (tok.kind === 'tag') return `#${tok.value}`;
     return `"${tok.value}"`;
+  }
+
+  /** The token just taken. */
+  prev() {
+    return this.t[this.i - 1];
   }
 
   take(kind, label) {
@@ -85,29 +96,46 @@ class TmParser {
     const key = this.take('id');
     this.take('=', '"="');
     if (Object.prototype.hasOwnProperty.call(owner.attrs, key.value)) this.fail(`"${key.value}" is set twice`, key);
+    const valueFrom = this.peek().from;
     owner.attrs[key.value] = this.value();
     if (owner.attrLines) owner.attrLines[key.value] = key.line;
-    if (this.is(',')) this.i++; // "zone = web, icon = \"user\"": a comma between attributes is allowed
+    const span = { from: key.from, to: this.prev().to, valueFrom, valueTo: this.prev().to, comma: null };
+    if (this.is(',')) span.comma = this.take(',').from; // "zone = web, icon = \"user\"": a comma between attributes is allowed
+    if (!owner.attrSpans) owner.attrSpans = {};
+    owner.attrSpans[key.value] = span;
   }
 
-  /** The optional title string and hashtags after a header. */
+  /** The optional title string and hashtags after a header, and where they are. */
   titleAndTags() {
-    const title = this.is('string') ? this.take('string').value : null;
+    const t = this.is('string') ? this.take('string') : null;
     const tags = [];
-    while (this.is('tag')) tags.push(this.take('tag').value);
-    return { title, tags };
+    const tagSpans = [];
+    while (this.is('tag')) {
+      const tok = this.take('tag');
+      tags.push(tok.value);
+      tagSpans.push({ value: tok.value, from: tok.from, to: tok.to });
+    }
+    return { title: t ? t.value : null, tags, titleSpan: t ? { from: t.from, to: t.to } : null, tagSpans };
+  }
+
+  /** Where a statement is: from its first token, its header (title and tags) and its block, if any. */
+  where(first, head, block) {
+    return { from: first.from, to: block ? block.close + 1 : head.end, head: head.end, title: head.titleSpan, tags: head.tagSpans, block };
   }
 
   /** Statements until "}" (or the end, at the top level). where: top | zone | element | flow | threat | control | scenario. */
+  /** Returns where the block's braces are ({ open, close }), or null when there is no block. */
   body(where, ctx) {
     const end = where === 'top' ? 'eof' : '}';
-    if (where !== 'top' && !this.is('{')) return;
-    if (where !== 'top') this.take('{', '"{"');
+    if (where !== 'top' && !this.is('{')) return null;
+    const open = where !== 'top' ? this.take('{', '"{"').from : null;
     while (!this.is(end)) {
       if (this.is('eof')) this.fail('a block is never closed with "}"');
       this.statement(where, ctx);
     }
+    const close = this.peek().from;
     this.i++;
+    return { open, close };
   }
 
   statement(where, ctx) {
@@ -154,7 +182,9 @@ class TmParser {
   element(kind, ctx) {
     const kw = this.take('id');
     const id = this.newId(kind);
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     const e = {
       id: id.value,
       kind,
@@ -168,34 +198,40 @@ class TmParser {
       line: kw.line,
     };
     this.m.elements.push(e);
-    this.body('element', { owner: e, element: e, zone: ctx.zone });
+    e.src = this.where(kw, head, this.body('element', { owner: e, element: e, zone: ctx.zone }));
   }
 
   zone(ctx) {
     const kw = this.take('id');
     const id = this.newId('zone');
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     const z = { id: id.value, title, tags, attrs: {}, parent: ctx.zone || null, threats: [], line: kw.line };
     this.m.zones.push(z);
-    this.body('zone', { owner: z, zone: z.id });
+    z.src = this.where(kw, head, this.body('zone', { owner: z, zone: z.id }));
   }
 
   flow(ctx) {
     const a = this.take('id');
     const arrow = this.take('arrow');
     const b = this.take('id', 'the ID the flow goes to');
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     const forward = arrow.value === '->';
     const f = { from: forward ? a.value : b.value, to: forward ? b.value : a.value, label: title, tags, attrs: {}, threats: [], line: a.line };
     this.m.flows.push(f);
-    this.body('flow', { owner: f, flow: f, zone: ctx.zone, element: ctx.element });
+    f.src = this.where(a, head, this.body('flow', { owner: f, flow: f, zone: ctx.zone, element: ctx.element }));
   }
 
   threat(ctx) {
     const kw = this.take('id');
     const id = this.is('id') ? this.take('id').value : null;
     if (!this.is('string')) this.fail(`expected the threat's title (a string), found ${this.what(this.peek())}`);
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     let target = { type: 'model', id: null };
     if (ctx.flow) target = { type: 'flow', flow: ctx.flow };
     else if (ctx.owner && ctx.element === ctx.owner) target = { type: 'element', id: ctx.element.id };
@@ -203,7 +239,7 @@ class TmParser {
     const t = { id, title, tags, attrs: {}, target, line: kw.line };
     this.m.threats.push(t);
     if (ctx.owner && ctx.owner !== this.m && ctx.owner.threats) ctx.owner.threats.push(t);
-    this.body('threat', { owner: t });
+    t.src = this.where(kw, head, this.body('threat', { owner: t }));
   }
 
   /** control C01 "Title" #implemented { covers = [T01, T02] … }: something done (or to be done) about threats. */
@@ -212,20 +248,24 @@ class TmParser {
     if (!this.is('id')) this.fail('a control needs an ID, so threats can name it: control C01 "…"');
     const id = this.take('id').value;
     if (!this.is('string')) this.fail(`expected the control's title (a string), found ${this.what(this.peek())}`);
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     const c = { id, title, tags, attrs: {}, line: kw.line };
     this.m.controls.push(c);
-    this.body('control', { owner: c });
+    c.src = this.where(kw, head, this.body('control', { owner: c }));
   }
 
   scenario() {
     const kw = this.take('id');
     const id = this.newId('scenario');
-    const { title, tags } = this.titleAndTags();
+    const head = this.titleAndTags();
+    head.end = this.prev().to;
+    const { title, tags } = head;
     const s = { id: id.value, title, tags, attrs: {}, steps: [], line: kw.line };
     this.m.scenarios.push(s);
     if (!this.is('{')) this.fail('a scenario needs a block of steps: { a -> b … }');
-    this.body('scenario', { owner: s });
+    s.src = this.where(kw, head, this.body('scenario', { owner: s }));
   }
 
   step(s) {
@@ -234,7 +274,7 @@ class TmParser {
     const b = this.take('id', 'the ID the step goes to');
     const label = this.is('string') ? this.take('string').value : null;
     const forward = arrow.value === '->';
-    s.steps.push({ from: forward ? a.value : b.value, to: forward ? b.value : a.value, label, line: a.line });
+    s.steps.push({ from: forward ? a.value : b.value, to: forward ? b.value : a.value, label, line: a.line, src: { from: a.from, to: this.prev().to } });
   }
 
   parse() {

@@ -47,14 +47,14 @@ class TwApp {
     this.statusEl = top.createDiv({ cls: 'tw-status' });
     this.statusEl.setAttr('role', 'status');
     const tools = top.createDiv({ cls: 'tw-tools' });
+    this.codeBtn = twButton(tools, 'Code', 'Show or hide the model’s text', () => this.showCode(!this.codeShown), 'code');
+    this.codeBtn.addClass('tw-code-button');
     this.copyBtn = twButton(tools, 'Save a copy', 'Save this example as a model of your own, to change it', () => this.saveCopy(), 'copy-plus');
     this.renameBtn = twButton(tools, 'Rename', 'Rename this model', () => this.rename(), 'pencil');
     this.dupBtn = twButton(tools, 'Duplicate', 'Make a copy of this model under a new name', () => this.saveCopy(), 'copy');
     this.deleteBtn = twButton(tools, 'Delete', 'Delete this model from this browser', () => this.remove(), 'trash-2');
     twButton(tools, 'Download', 'Download this model as a .threat file', () => this.download(), 'download');
     twButton(tools, 'Copy as code block', 'Copy the model as a ```threat code block, to paste into an Obsidian note', () => this.copyBlock(), 'clipboard-copy');
-    this.codeBtn = twButton(tools, 'Code', 'Show or hide the model’s text', () => this.showCode(!this.codeShown), 'code');
-    this.codeBtn.addClass('tw-code-button');
     twButton(tools, 'About', 'What this page is, and where your models are kept', () => twAbout(), 'info');
 
     const main = r.createDiv({ cls: 'tw-main' });

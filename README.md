@@ -4,8 +4,10 @@ An Obsidian plugin for writing threat models in your notes. You describe a syste
 
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
+**Try it in your browser:** the [Threat Modelling web app](https://27escape.github.io/threat-model-obsidian/) has the same language, diagrams and report, with examples to start from. Nothing to install, and nothing leaves your browser. See [The web app](#the-web-app).
+
 > [!NOTE]
-> **0.2.2:** a web app, at https://27escape.github.io/threat-model-obsidian/; a skill for an AI such as Claude, to draft a threat model from a photo of a diagram or from your description; and two small fixes. See [the release notes](docs/release-notes/0.2.2.md).
+> **0.2.2:** a [web app](https://27escape.github.io/threat-model-obsidian/); a skill for an AI such as Claude, to draft a threat model from a photo of a diagram or from your description; and two small fixes. See [the release notes](docs/release-notes/0.2.2.md).
 >
 > **0.2.1:** the settings missing from the settings page in 0.2.0 are back, and a `.threat` file's tab has the plugin's own icon, `shield-half`. See [the release notes](docs/release-notes/0.2.1.md).
 >
@@ -16,13 +18,34 @@ It works on desktop and mobile, and it is completely local: diagrams are drawn b
 <!-- screenshots: left out of the sample vault's copy of this file (tools/vault-docs.mjs), where the plugin itself is there to see -->
 ## Screenshots
 
+**Structure:** a C4-style view, threats on the boxes and arrows, coloured by risk
+
 ![The Structure view of a customer portal sign-in: C4-style boxes with icons, threats on boxes and arrows, coloured by risk](docs/images/screenshots/structure.png)
 
-| | |
-| --- | --- |
-| ![The Data flow view of an online shop: trust zones, numbered flows, unencrypted flows dashed, the threat register and a finding below](docs/images/screenshots/dataflow.png) **Data flow:** trust zones, numbered flows and their data; unencrypted flows dashed, findings from the model underneath | ![The Sequence view of a sign-in scenario, with threats as notes tinted by risk](docs/images/screenshots/sequence.png) **Sequence:** a scenario step by step, threats as notes, louder as the risk rises |
-| ![Clicking threat R1 keeps the places it applies and fades the rest of the diagram](docs/images/screenshots/footprint.png) **A threat's footprint:** click an ID to see everywhere it applies | ![The top of a saved report: its summary, top risks and what needs action](docs/images/screenshots/report.png) **The report:** a summary for readers in a hurry, then the threat register, controls and an action plan |
-| ![The report's risk matrix, before and after controls](docs/images/screenshots/risk-matrix.png) **Risk matrix:** likelihood against impact, before and after controls | ![A threat model in Source mode, with syntax highlighting](docs/images/screenshots/editor.png) **Writing a model:** syntax highlighting as you type |
+**Data flow:** trust zones, numbered flows and their data; unencrypted flows dashed, findings from the model underneath
+
+![The Data flow view of an online shop: trust zones, numbered flows, unencrypted flows dashed, the threat register and a finding below](docs/images/screenshots/dataflow.png)
+
+**Sequence:** a scenario step by step, threats as notes, louder as the risk rises
+
+![The Sequence view of a sign-in scenario, with threats as notes tinted by risk](docs/images/screenshots/sequence.png)
+
+**A threat's footprint:** click an ID to see everywhere it applies
+
+![Clicking threat R1 keeps the places it applies and fades the rest of the diagram](docs/images/screenshots/footprint.png)
+
+**The report:** a summary for readers in a hurry, then the threat register, controls and an action plan
+
+![The top of a saved report: its summary, top risks and what needs action](docs/images/screenshots/report.png)
+
+**Risk matrix:** likelihood against impact, before and after controls
+
+![The report's risk matrix, before and after controls](docs/images/screenshots/risk-matrix.png)
+
+**Writing a model:** syntax highlighting as you type
+
+![A threat model in Source mode, with syntax highlighting](docs/images/screenshots/editor.png)
+
 <!-- /screenshots -->
 
 ## A threat model
@@ -94,7 +117,7 @@ To edit `.threat` files outside Obsidian, in VS Code for example, a PlantUML ext
 
 ## The web app
 
-The same models and diagrams in a web page, for trying the language without Obsidian, or for people who don't use it: **https://27escape.github.io/threat-model-obsidian/**. The diagrams fill the page, with the model's text beside them as you write (*Code* hides it, to give the diagrams the whole width), and the same views, threat register, findings and key as in Obsidian. *Report* downloads the report as a Markdown file.
+The same models and diagrams in a web page, for trying the language without Obsidian, or for people who don't use it: **[https://27escape.github.io/threat-model-obsidian/](https://27escape.github.io/threat-model-obsidian/)**. The diagrams fill the page, with the model's text beside them as you write (*Code* hides it, to give the diagrams the whole width), and the same views, threat register, findings and key as in Obsidian. *Report* downloads the report as a Markdown file.
 
 - **The models menu** (the model's name, at the top) lists **examples** to open and change, and **My models**: your own, each with a name you choose. *New* starts one, *Open* reads a `.threat` file (or the first model in a Markdown note), and *Save a copy* keeps your changes to an example.
 - **To Obsidian:** *Download* saves the model as a `.threat` file to drop into your vault, and *Copy as code block* copies it as a `threat` code block to paste into a note.

@@ -1,5 +1,7 @@
 // Threat model text → tokens. Kinds: id, string, number, tag, arrow ("->" or "<-"), the punctuation { } [ ] = ,
-// and eof. Every token carries the line it starts on. Errors are thrown as TmError with a line number.
+// and eof. Every token carries the line it starts on, and where it is in the text (from, to: character offsets, as
+// for String.slice), so that edits can change just the text of one token (edit.js). Errors are thrown as TmError
+// with a line number.
 
 class TmError extends Error {
   constructor(message, line) {
@@ -25,7 +27,8 @@ function tmLex(src) {
   const n = src.length;
   let i = 0;
   let line = 1;
-  const add = (kind, value, at = line) => out.push({ kind, value, line: at });
+  // a token from offset `from` to the current position i
+  const add = (kind, value, at, from) => out.push({ kind, value, line: at, from, to: i });
 
   while (i < n) {
     const c = src[i];
@@ -50,8 +53,8 @@ function tmLex(src) {
       continue;
     }
     if ((c === '-' && src[i + 1] === '>') || (c === '<' && src[i + 1] === '-')) {
-      add('arrow', c === '-' ? '->' : '<-');
       i += 2;
+      add('arrow', c === '-' ? '->' : '<-', line, i - 2);
       continue;
     }
     if (c === '"' || c === '`') {
@@ -63,8 +66,9 @@ function tmLex(src) {
       }
       if (j >= n) throw new TmError(`a string starting with ${c} is never closed`, start);
       const raw = src.slice(i + 1, j);
-      add('string', c === '`' ? tmDedent(raw) : raw.replace(/\r/g, ''), start);
+      const from = i;
       i = j + 1;
+      add('string', c === '`' ? tmDedent(raw) : raw.replace(/\r/g, ''), start, from);
       continue;
     }
     if (c === '#') {
@@ -72,32 +76,35 @@ function tmLex(src) {
       while (j < n && /[A-Za-z0-9_/-]/.test(src[j]) && !(src[j] === '-' && src[j + 1] === '>')) j++;
       const tag = src.slice(i + 1, j);
       if (!tag || !/[A-Za-z_]/.test(tag)) throw new TmError(`"#${tag}" isn't a hashtag: a tag needs a letter`, line);
-      add('tag', tag);
+      const from = i;
       i = j;
+      add('tag', tag, line, from);
       continue;
     }
     if (/[0-9]/.test(c)) {
       const m = /^[0-9]+(\.[0-9]+)?/.exec(src.slice(i, i + 40));
       if (tmIdStart(src[i + m[0].length] || '')) throw new TmError(`"${m[0]}${src[i + m[0].length]}…": an ID must start with a letter`, line);
-      add('number', Number(m[0]));
+      const from = i;
       i += m[0].length;
+      add('number', Number(m[0]), line, from);
       continue;
     }
     if (tmIdStart(c)) {
       let j = i + 1;
       // "-" belongs to the ID (T-01) unless it starts an arrow (a->b)
       while (j < n && (tmIdChar(src[j]) || (src[j] === '-' && src[j + 1] !== '>'))) j++;
-      add('id', src.slice(i, j));
+      const from = i;
       i = j;
+      add('id', src.slice(from, j), line, from);
       continue;
     }
     if ('{}[]=,'.includes(c)) {
-      add(c, c);
       i++;
+      add(c, c, line, i - 1);
       continue;
     }
     throw new TmError(`unexpected character ${JSON.stringify(c)}`, line);
   }
-  add('eof', '');
+  add('eof', '', line, i);
   return out;
 }

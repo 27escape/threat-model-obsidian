@@ -18,8 +18,9 @@ chat; update it when something here changes.
 
 ## Decided
 
-- **Web app first, then point-and-click in Obsidian** (ideas 9 and 12; the web app's first stage is built: text,
-  diagrams, examples, My models, export; next is the edit engine). One repo, one build
+- **Web app first, then point-and-click in Obsidian** (ideas 9 and 12). Built: the web app's first
+  stage (diagrams, text, the models menu, export) and the edit engine (`edit.js`, `edit-threat.js`). Next: the
+  point-and-click forms in the web app. One repo, one build
   with a second file list. Order: a standalone page (text editor, live diagrams, threat register, export as a
   `.threat` file or a `threat` code block, report as Markdown); then an edit engine (source positions; change, add or
   remove one statement, keeping comments and layout) as a plain module; then point-and-click forms in the page; then
