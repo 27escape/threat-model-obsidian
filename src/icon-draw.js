@@ -66,14 +66,25 @@ function tmIconBefore(label) {
 function tmDrawIcons(root) {
   let done = 0;
   for (const node of root.querySelectorAll('svg g.pele-node[class*="tmIcon_"], svg g.pele-cluster[class*="tmIcon_"]')) {
-    if (node.querySelector(':scope > .tm-icon')) continue;
     const classes = [...node.classList];
     const part = (prefix) => (classes.find((c) => c.startsWith(prefix)) || '').slice(prefix.length);
     const name = part('tmIcon_').replace(/_/g, '-');
     const cluster = node.classList.contains('pele-cluster'); // a zone: the icon goes after its title
-    const label = cluster
+    let label = cluster
       ? node.querySelector(':scope > text.pele-cluster-label') || node.querySelector(':scope > text')
       : node.querySelector('text.pele-label') || node.querySelector(':scope > text') || node.querySelector('text');
+    // a box nested in another (a zone inside a system, in the Structure view) has its title drawn in a group of its
+    // own, with the same data-id, later in the picture: the icon goes there, beside the title
+    let host = node;
+    if (cluster && !label && node.ownerSVGElement && node.getAttribute('data-id')) {
+      const twins = node.ownerSVGElement.querySelectorAll(`g[data-id="${CSS.escape(node.getAttribute('data-id'))}"]`);
+      const twin = [...twins].find((t) => t !== node && t.querySelector(':scope > text.pele-cluster-label'));
+      if (twin) {
+        host = twin;
+        label = twin.querySelector(':scope > text.pele-cluster-label');
+      }
+    }
+    if (host.querySelector(':scope > .tm-icon')) continue;
     if (!TM_ICON_NAME.test(name)) continue;
     if (!label) {
       tmIconTrouble(`a box with icon "${name}" has no label to put it in`);
@@ -122,7 +133,7 @@ function tmDrawIcons(root) {
       q.appendChild(tip);
       g.appendChild(q);
     }
-    node.appendChild(g);
+    host.appendChild(g);
     done++;
   }
   return done;

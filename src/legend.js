@@ -10,18 +10,20 @@ const TM_KEY_KINDS = [
   ['external', 'External system'],
 ];
 
-/** Fill el with the key for this view. overlay: whether the Structure view shows threats; marks: whether the Data flow
- *  view marks untrusted zones and sensitive data (the Default icons setting). */
-function tmLegendInto(el, model, view, overlay, marks = true) {
+/** Fill el with the key for this view. overlay: whether the Structure view shows threats; marks: whether the views
+ *  mark untrusted zones and sensitive data (the Default icons setting); zones: whether the Structure view shows zones. */
+function tmLegendInto(el, model, view, overlay, marks = true, zones = true) {
+  const zonesShown = view === 'dataflow' || (view === 'structure' && zones);
   el.empty();
   if (view === 'structure') {
     const used = new Set(model.elements.map((e) => (e.kind === 'queue' ? 'store' : e.kind)));
     const kinds = el.createDiv({ cls: 'tm-legend-row' });
     for (const [kind, name] of TM_KEY_KINDS) if (used.has(kind)) kinds.createSpan({ cls: `tm-legend-item tm-key-chip tm-key-${kind}`, text: name });
     kinds.createSpan({ cls: 'tm-legend-item tm-key-chip tm-key-box', text: 'Inside a system or container' });
+    if (zones && model.zones.length) kinds.createSpan({ cls: 'tm-legend-item tm-key-chip tm-key-zone', text: 'Zone (trust boundary)' });
   }
   const plainFlows = view !== 'sequence' && model.flows.some((f) => f.encrypted === false);
-  const untrusted = marks && view === 'dataflow' && model.zones.some((z) => /untrusted/i.test(z.trust || ''));
+  const untrusted = marks && zonesShown && model.zones.some((z) => /untrusted/i.test(z.trust || ''));
   const sensitive = marks && view === 'dataflow' && model.flows.some((f) => f.sensitive);
   if (plainFlows || untrusted || sensitive) {
     const row = el.createDiv({ cls: 'tm-legend-row' });

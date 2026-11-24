@@ -6,6 +6,10 @@
 // The threat overlay (opts.overlay, on unless false) puts boxed STRIDE letters and threat IDs on boxes and arrows (the IDs
 // match the table under the diagram) and colours them by their most serious open threat. Threats on hidden elements, and on flows inside one box, show on the visible box holding
 // them, so nothing drops out of sight at the Context level. opts.compact drops descriptions and keeps one short label per arrow.
+// Zones (opts.zones, on unless false): boxes are nested by what they are part of, and a zone can cut across that (a
+// system's containers in two zones), so zones are drawn within each level: at the top, and inside each system or
+// container, the boxes in a zone other than the one around them are put in a dotted zone box. A zone split across
+// two systems is drawn twice, with the same name (its second box's ID ends "r2", so a click still finds the zone).
 // Colours: in Obsidian they come from styles.css, through the class on each node, so they follow the theme
 // (Obsidian 1.15 draws Mermaid with Pele, where colours written in the diagram are fixed). With portable: true the
 // colours are written into the diagram instead: for saved reports, which styles.css doesn't reach.
@@ -78,6 +82,7 @@ function tmStructure(model, level, opts = {}) {
   const portable = !!opts.portable;
   const overlay = opts.overlay !== false;
   const compact = !!opts.compact;
+  const showZones = opts.zones !== false && model.zones.length > 0;
   const lvl = TM_LEVELS.includes(level) ? level : 'container';
   const ids = tmMmIds(model);
   const byId = new Map(model.elements.map((e) => [e.id, e]));
@@ -111,6 +116,52 @@ function tmStructure(model, level, opts = {}) {
   const riskClasses = portable ? TM_RISK_CLASSES : TM_RISKS.map((r) => `classDef ${tmRiskClass(r)} stroke-width:1px`);
   const lines = ['flowchart TB', ...[...classes, ...(overlay ? riskClasses : [])].map((c) => `  ${c}`), ...tmIconClassDefs(model.elements, opts)];
   const styles = [];
+
+  // ---- zones: the boxes of one level, grouped by zone within the zone around them (ctx: that zone, or null)
+  const marks = opts.defaultIcons !== false;
+  const untrusted = (z) => marks && /untrusted/i.test(z.trust || '');
+  const zoneIcon = { name: TM_UNTRUSTED_ICON, fg: null, bg: null };
+  if (showZones) {
+    // its look: written in when portable, otherwise from styles.css (the class is only a name to style by)
+    lines.push(portable ? '  classDef tmZone fill:none,stroke:#777,stroke-width:2px,stroke-dasharray:2 3' : '  classDef tmZone opacity:1');
+    if (model.zones.some(untrusted)) lines.push(...tmIconClassNames(zoneIcon).filter((c) => !lines.includes(`  classDef ${c} opacity:1`)).map((c) => `  classDef ${c} opacity:1`));
+  }
+  const zoneById = new Map(model.zones.map((z) => [z.id, z]));
+  const drawn = new Map(); // how often each zone has been drawn, for unique IDs
+  /** The zones from the outermost one inside ctx down to zid. */
+  const chain = (zid, ctx) => {
+    const out = [];
+    for (let z = zoneById.get(zid), n = 0; z && z.id !== ctx && n < 50; z = zoneById.get(z.parent), n++) out.unshift(z.id);
+    return out;
+  };
+  const group = (items, pad, ctx) => {
+    if (!showZones) return items.forEach((e) => emit(e, pad));
+    const root = { zones: new Map(), items: [] };
+    for (const e of items) {
+      let at = root;
+      for (const zid of e.zone && e.zone !== ctx ? chain(e.zone, ctx) : []) {
+        if (!at.zones.has(zid)) at.zones.set(zid, { zones: new Map(), items: [] });
+        at = at.zones.get(zid);
+      }
+      at.items.push(e);
+    }
+    const draw = (at, pad) => {
+      for (const [zid, inner] of at.zones) {
+        const z = zoneById.get(zid);
+        const n = (drawn.get(zid) || 0) + 1;
+        drawn.set(zid, n);
+        const id = `${ids.get(`zone:${zid}`)}${n > 1 ? `r${n}` : ''}`;
+        lines.push(`${pad}subgraph ${id} ["${tmMmText(z.title + (z.trust ? ` (${z.trust})` : ''))}${untrusted(z) ? TM_ZONE_ICON_ROOM : ''}"]`);
+        draw(inner, pad + '  ');
+        lines.push(`${pad}end`);
+        if (untrusted(z)) lines.push(...tmIconClassLines(pad, id, zoneIcon));
+        lines.push(`${pad}class ${id} tmZone`);
+      }
+      for (const e of at.items) emit(e, pad);
+    };
+    draw(root, pad);
+  };
+
   const emit = (e, pad) => {
     const id = ids.get(e.id);
     const kids = shownChildren(e);
@@ -118,7 +169,7 @@ function tmStructure(model, level, opts = {}) {
     const badge = badgeOf(threats);
     if (kids.length) {
       lines.push(`${pad}subgraph ${id} ["${tmMmText(e.title)} ${tmMmText(tmC4Kind(e))}${badge ? ` ${badge}` : ''}"]`);
-      for (const k of kids) emit(k, pad + '  ');
+      group(kids, pad + '  ', e.zone || null);
       lines.push(`${pad}end`);
       if (portable) styles.push(`  style ${id} fill:none,stroke:#888,stroke-dasharray:6 4`);
       return;
@@ -135,7 +186,7 @@ function tmStructure(model, level, opts = {}) {
     if (risk) lines.push(`${pad}class ${id} ${tmRiskClass(risk)}`);
   };
   const roots = model.elements.filter((e) => !e.parent || !byId.has(e.parent));
-  for (const e of roots) emit(e, '  ');
+  group(roots, '  ', null);
   if (!roots.length) lines.push('  empty["Nothing to show yet: add a person, system or container"]');
 
   // flows between the visible elements, one arrow per pair, labels gathered

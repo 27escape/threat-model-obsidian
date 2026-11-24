@@ -271,6 +271,12 @@ svg tspan.tm-tid-closed { fill: var(--text-muted); text-decoration: line-through
   stroke-dasharray: 6 4;
 }
 
+/* zones in the Structure view: dotted, so they stand apart from the dashed system and container boxes */
+.tm-block .pele-cluster.tmZone:not(.pele-box) > rect {
+  stroke-width: 2px;
+  stroke-dasharray: 2 3;
+}
+
 /* flows coloured by their most serious open threat */
 .tm-block .pele-edge:is([data-id^='tmcritical'], [data-id^='tmhigh'], [data-id^='tmmedium'], [data-id^='tmlow']) { stroke-width: 2px; }
 .tm-block .pele-edge[data-id^='tmcritical'] { stroke: var(--tm-critical); }
@@ -324,6 +330,7 @@ svg tspan.tm-tid-closed { fill: var(--text-muted); text-decoration: line-through
 .tm-key-external { background: var(--tm-c4-external); border-color: var(--tm-boundary); }
 .tm-key-store { border-radius: 0.8em; }
 .tm-key-box { border: 1.5px dashed var(--tm-boundary); }
+.tm-key-zone { border: 2px dotted var(--tm-boundary); }
 
 /* STRIDE letters in their colours: boxed letters in diagrams (SVG, coloured by fill, see stride-colour.js), and
    chips in tables, keys and saved reports (HTML). Not limited to .tm-block, so saved reports get them too. */

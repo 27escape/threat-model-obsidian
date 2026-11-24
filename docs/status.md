@@ -14,7 +14,8 @@ chat; update it when something here changes.
 - **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
   first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
   model without warnings, and icon names that survive Lucide's renames.
-- **0.2.3, ready to release:** point and click for elements, zones, flows
+- **Not released yet:** zones on the Structure view (dotted zone boxes within each level, a *Zones* switch, the key's zone entry), and the icon on a zone nested in another box drawn beside its title.
+- **0.2.3 (released):** point and click for elements, zones, flows
   and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
   and errors that go to their line, a problems list, *Show in text*, the report shown in the page (print or save as
   PDF), pictures (SVG, PNG), the threat register as CSV, a share link with the model in it, earlier versions in the

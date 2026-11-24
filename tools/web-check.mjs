@@ -158,6 +158,24 @@ await pause();
 await p.click('.tw-view .pele-edge-label >> nth=0');
 await pause(200);
 if (!/flow/i.test(await p.textContent('.tw-panel-head h2'))) fail('an arrow does not open its flow');
+// the Structure view's zones: a zone box opens the zone; the Zones switch takes them away
+if (await p.isVisible('.tw-panel')) await p.click('.tw-panel-head button');
+await p.selectOption('.tm-view-select', 'structure');
+await pause();
+const zoneBox = await p.$('.tw-view .pele-cluster.tmZone > rect');
+if (!zoneBox) fail('the Structure view draws no zones');
+else {
+  const zb = await zoneBox.boundingBox();
+  await p.mouse.click(zb.x + 6, zb.y + 40);
+  await pause(200);
+  if (!/Zone/.test(await p.textContent('.tw-panel .tw-panel-kind').catch(() => ''))) fail('a zone on the Structure view does not open the zone');
+  await p.click('.tw-panel-head button');
+  await p.click('.tm-toggle >> text=Zones');
+  await pause();
+  if (await p.$('.tw-view .pele-cluster.tmZone')) fail('the Zones switch does not take the zones away');
+  await p.click('.tm-toggle >> text=Zones');
+  await pause();
+}
 // controls: a new one, then deleted
 await pick('Model', 'Controls');
 await pause(200);
@@ -386,5 +404,5 @@ if ((await p.$$('.tw-menu-panel .tw-group:nth-child(3) .tw-item')).length) fail(
 
 await browser.close();
 for (const x of problems) console.log(`problem: ${x}`);
-console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
+console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
 process.exit(problems.length ? 1 : 0);

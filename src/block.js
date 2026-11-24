@@ -33,6 +33,7 @@ class TmBlock extends MarkdownRenderChild {
       scenario: was.scenario !== undefined ? was.scenario : this.model.scenarioId || (this.model.scenarios[0] ? this.model.scenarios[0].id : ''),
       overlay: was.overlay !== undefined ? was.overlay : true, // threats on the Structure view
       compact: was.compact !== undefined ? was.compact : false, // short labels, the detail in the table
+      zones: was.zones !== undefined ? was.zones : true, // zones on the Structure view
     };
     if (this.state.scenario && !this.model.scenarios.some((x) => x.id === this.state.scenario)) this.state.scenario = '';
 
@@ -56,22 +57,22 @@ class TmBlock extends MarkdownRenderChild {
 
   choose(change) {
     Object.assign(this.state, change);
-    const { view, level, scenario, overlay, compact } = this.state;
-    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact });
+    const { view, level, scenario, overlay, compact, zones } = this.state;
+    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact, zones });
     this.draw();
   }
 
   /** The Mermaid text of the current diagram (its colours come from styles.css and the theme). */
   text() {
-    const { view, level, scenario, overlay, compact } = this.state;
+    const { view, level, scenario, overlay, compact, zones } = this.state;
     if (view === 'sequence') return tmSequence(this.model, scenario, { compact });
     const defaultIcons = this.plugin.settings.defaultIcons;
     if (view === 'dataflow') return tmDataflow(this.model, { compact, defaultIcons });
-    return tmStructure(this.model, tmLevelFor(this.model, level), { overlay, compact, defaultIcons });
+    return tmStructure(this.model, tmLevelFor(this.model, level), { overlay, compact, zones, defaultIcons });
   }
 
   draw() {
-    const { view, scenario, overlay } = this.state;
+    const { view, scenario, overlay, zones } = this.state;
     this.viewSelect.value = view;
     this.drawExtra();
 
@@ -94,7 +95,7 @@ class TmBlock extends MarkdownRenderChild {
     tmDrawMermaid(this.text(), body, { app: this.plugin.app, sourcePath: this.sourcePath, component: inner });
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
     tmFindingsInto(this.findings, this.model.findings);
-    tmLegendInto(this.legend, this.model, view, overlay, this.plugin.settings.defaultIcons !== false);
+    tmLegendInto(this.legend, this.model, view, overlay, this.plugin.settings.defaultIcons !== false, zones);
   }
 
   /**
@@ -127,6 +128,7 @@ class TmBlock extends MarkdownRenderChild {
       b.addEventListener('click', () => this.choose({ [key]: !this.state[key] }));
     };
     if (this.state.view === 'structure' && this.model.threats.length) toggle('Threats', 'overlay', 'Show the threats on the boxes and arrows');
+    if (this.state.view === 'structure' && this.model.zones.length) toggle('Zones', 'zones', 'Show the zones (trust boundaries) around the boxes');
     toggle('Compact', 'compact', 'Short labels: no descriptions or data, the detail in the threat register below');
   }
 

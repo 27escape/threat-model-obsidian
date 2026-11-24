@@ -371,7 +371,8 @@ const tmTitleOf = (model, id) => (tmElement(model, id) || { title: id }).title;
 function twClickedItem(model, target) {
   const part = target.closest('.pele-node, .pele-cluster, .pele-edge, .pele-edge-label');
   if (!part) return null;
-  const dataId = part.getAttribute('data-id') || '';
+  // a zone drawn more than once (the Structure view) has "r2" and so on after its ID
+  const dataId = (part.getAttribute('data-id') || '').replace(/^(z\d+)r\d+$/, '$1');
   if (part.matches('.pele-edge, .pele-edge-label')) {
     const m = /^tm(?:none|critical|high|medium|low)(?:s\d+((?:f\d+)+)|(\d+))$/.exec(dataId);
     if (!m) return null;

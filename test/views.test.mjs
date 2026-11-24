@@ -66,7 +66,7 @@ test('Structure view: levels show more inside each box, and flows move to the ne
   const m = model(PORTAL);
   const ctx = tmStructure(m, 'context');
   assert.match(ctx, /^flowchart TB/);
-  assert.doesNotMatch(ctx, /subgraph/);
+  assert.doesNotMatch(ctx, /subgraph e/); // no system boxes at this level (zone boxes, z1 and so on, are)
   assert.match(ctx, /Software system/);
   assert.doesNotMatch(ctx, /Login form/);
   // user -> form becomes user -> app; app -> idp from api -> idp; flows inside app are left out
@@ -89,6 +89,49 @@ test('Structure view: levels show more inside each box, and flows move to the ne
   const comp = tmStructure(m, 'component');
   assert.match(comp, /Login form/);
   assert.match(comp, new RegExp(`subgraph ${ids.get('web')} `));
+});
+
+test('Structure view: zones drawn within each level, split across systems when the model says so, and switched off', () => {
+  const m = model(`
+zone net "Internet" { trust = "untrusted" }
+zone dc "Data centre" {
+  zone dmz "DMZ"
+}
+person user "User" { zone = net }
+system shop "Shop" {
+  zone = dc
+  container web "Web" { zone = dmz }
+  container api "API"
+}
+system crm "CRM" {
+  container ui "UI" { zone = dmz }
+}
+user -> web "Visits"
+web -> api "Calls"
+api -> ui "Syncs"
+`);
+  const text = tmStructure(m, 'container', { overlay: false });
+  const lines = text.split('\n').map((l) => l.trim());
+  // the user in Internet, with the untrusted shield's room after its title; Shop in Data centre at the top level
+  assert.ok(lines.includes('subgraph z1 ["Internet (untrusted)\u2003\u2003\u200b"]'), text);
+  assert.ok(lines.includes('subgraph z2 ["Data centre"]'), text);
+  // inside Shop (in Data centre), only Web is in another zone: DMZ, inside Data centre already, so no second Data centre box
+  const shop = text.slice(text.indexOf('subgraph e2 '), text.indexOf('subgraph e5 '));
+  assert.match(shop, /subgraph z3 \["DMZ"\]\n\s+e3\[/);
+  assert.ok(!/subgraph z2/.test(shop), shop);
+  // CRM has no zone: it is outside the zone boxes, and its UI is in DMZ inside Data centre, each drawn a second time
+  const crm = text.slice(text.indexOf('subgraph e5 '));
+  assert.match(crm, /subgraph z2r2 \["Data centre"\]\n\s+subgraph z3r2 \["DMZ"\]\n\s+e6\[/);
+  for (const id of ['z1', 'z2', 'z3', 'z2r2', 'z3r2']) assert.ok(lines.includes(`class ${id} tmZone`), id);
+  // every subgraph is closed
+  assert.equal(lines.filter((l) => l.startsWith('subgraph')).length, lines.filter((l) => l === 'end').length);
+  // switched off: no zone boxes, as before
+  const off = tmStructure(m, 'container', { overlay: false, zones: false });
+  assert.ok(!/subgraph z/.test(off) && !/tmZone/.test(off), off);
+  // portable (saved reports): the zone's look is written in
+  assert.match(tmStructure(m, 'context', { portable: true }), /classDef tmZone fill:none,stroke:#777,stroke-width:2px,stroke-dasharray:2 3/);
+  // a model without zones gets nothing extra
+  assert.ok(!/tmZone/.test(tmStructure(model('person a "A"\nsystem b "B"\na -> b'), 'context')));
 });
 
 test('Data flow view: zones as boxes, numbered flows with data and STRIDE, coloured by risk', () => {
