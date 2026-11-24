@@ -5,7 +5,7 @@ chat; update it when something here changes.
 
 ## Released
 
-- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0, 0.2.1 and 0.2.2. 0.2.0 dropped the `.flow` kind
+- **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0, 0.2.1, 0.2.2 and 0.2.3. 0.2.0 dropped the `.flow` kind
   names and added default icons, the untrusted-zone shield and the padlock on sensitive data; 0.2.1 fixed the settings
   page (only the first three settings showed in 0.2.0; now tested) and gave `.threat` tabs the plugin's own icon,
   `shield-half`.
@@ -14,7 +14,7 @@ chat; update it when something here changes.
 - **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
   first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
   model without warnings, and icon names that survive Lucide's renames.
-- **Not released yet:** zones on the Structure view (dotted zone boxes within each level, a *Zones* switch, the key's zone entry), and the icon on a zone nested in another box drawn beside its title.
+- **0.3.0, ready to release** (`docs/release-notes/0.3.0.md`): editing from the diagram in Obsidian (the *Edit* switch and the Threat model editor in the right sidebar, with Add and Model menus, undo and redo, problems, *Show in text*, *Open in the web editor*); zones on the Structure view; a flow to a new element; deleting a box takes its flows. Release with `tools/release.sh 0.3.0` (push from WSL first).
 - **0.2.3 (released):** point and click for elements, zones, flows
   and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
   and errors that go to their line, a problems list, *Show in text*, the report shown in the page (print or save as
@@ -24,9 +24,10 @@ chat; update it when something here changes.
 
 ## Decided
 
-- **Point and click in Obsidian, next** (24 November 2026): the editor panel in the right sidebar, an *Edit* switch on
-  each block (off unless turned on), with the problems list, *Show in text* and *Open in the web editor*; undo is
-  Obsidian's own. The plan, in stages: [`docs/editor-in-obsidian.md`](editor-in-obsidian.md).
+- **Point and click in Obsidian** (24 November 2026, built for 0.3.0): the editor panel in the right sidebar, an *Edit*
+  switch on each block (off unless turned on), with the problems list, *Show in text* and *Open in the web editor*;
+  the editor's own undo as well as Obsidian's. How it went, in stages: [`docs/editor-in-obsidian.md`](editor-in-obsidian.md);
+  how it works: `docs/architecture.md`.
 - **Web app first, then point-and-click in Obsidian** (ideas 9 and 12). Built: the web app's first
   stage (diagrams, text, the models menu, export), the edit engine (`edit.js`, `edit-threat.js`) and point and click
   in the web app for threats (rated by likelihood × impact, a risk tag or a CVSS vector), elements, zones (with new zones), flows and controls (`threat-form.js`, `web/edit-panel.js`,

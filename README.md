@@ -2,11 +2,13 @@
 
 **[Open the web editor →](https://27escape.github.io/threat-model-obsidian/)** Try it in your browser first: the same language, diagrams and report, with examples to start from, and you can build a model by pointing and clicking. Nothing to install, and nothing leaves your browser. See [The web app](#the-web-app).
 
-An Obsidian plugin for writing threat models in your notes. You describe a system in a `threat` code block: its people, systems, containers and data stores, the trust zones they run in, the data that flows between them, and the threats to each part. The plugin draws the model three ways, writes a report of it as a note when you ask, and checks it as you write.
+An Obsidian plugin for writing threat models in your notes. You describe a system in a `threat` code block: its people, systems, containers and data stores, the trust zones they run in, the data that flows between them, and the threats to each part. The plugin draws the model three ways, lets you change it by clicking its diagram, writes a report of it as a note when you ask, and checks it as you write.
 
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
 > [!NOTE]
+> **0.3.0:** change a model by clicking its diagram, in Obsidian too: an *Edit* switch on each diagram opens the Threat model editor in the right sidebar, with undo; zones on the Structure view; a flow can go to a new element; *Open in the web editor*. See [the release notes](docs/release-notes/0.3.0.md).
+>
 > **0.2.3:** the [web editor](https://27escape.github.io/threat-model-obsidian/) can now build and change a model by pointing and clicking, undo and redo, print the report or save it as PDF, export pictures and the threat register, and share a model as a link. In Obsidian, diagrams are drawn even when another plugin's code-block processing fails. See [the release notes](docs/release-notes/0.2.3.md).
 >
 > **0.2.2:** a [web app](https://27escape.github.io/threat-model-obsidian/); a skill for an AI such as Claude, to draft a threat model from a photo of a diagram or from your description; and two small fixes. See [the release notes](docs/release-notes/0.2.2.md).
@@ -20,9 +22,17 @@ It works on desktop and mobile, and it is completely local: diagrams are drawn b
 <!-- screenshots: left out of the sample vault's copy of this file (tools/vault-docs.mjs), where the plugin itself is there to see -->
 ## Screenshots
 
-**Structure:** a C4-style view, threats on the boxes and arrows, coloured by risk
+**Structure:** a C4-style view, threats on the boxes and arrows, coloured by risk, inside their trust zones
 
-![The Structure view of a customer portal sign-in: C4-style boxes with icons, threats on boxes and arrows, coloured by risk](docs/images/screenshots/structure.png)
+![The Structure view of a customer portal sign-in: C4-style boxes with icons inside dotted trust zones, threats on boxes and arrows, coloured by risk](docs/images/screenshots/structure.png)
+
+**Editing from the diagram:** turn on *Edit*, click a box, and change it in the Threat model editor
+
+![A customer portal sign-in with Edit on: the Auth Gateway clicked on the diagram, and its details and threats in the Threat model editor in the right sidebar](docs/images/screenshots/edit-panel.png)
+
+**A flow to a new element:** the new element is added with its flow, ready to fill in
+
+![The Threat model editor's New flow form, going from Orders service to a new element, with fields for its kind, name, parent and zone](docs/images/screenshots/edit-new-flow.png)
 
 **Data flow:** trust zones, numbered flows and their data; unencrypted flows dashed, findings from the model underneath
 
@@ -103,6 +113,19 @@ A saved report also has properties (the model, date, version, status, review dat
 
 If the model has mistakes, the block lists them with their line numbers instead. Warnings, such as a threat without an ID, are listed under the view.
 
+## Editing from the diagram
+
+You can change a model by clicking its diagram instead of typing. Each change is written into the model's text, changing only what you changed and keeping the rest as you wrote it, comments and all.
+
+- **Turn on *Edit*** in the diagram's bar (before *Report*). The diagram gets an outline, and the **Threat model editor** opens in the right sidebar. *Edit* starts off every time, so nothing changes your notes until you ask. Turning it on in another diagram moves the editor there; turning it off, closing the editor, or opening another file stops editing.
+- **Click a box, a zone, an arrow or a threat** (its ID on the diagram, or its row in the threat register) to open it in the editor: a box's name, technology, zone, icon, link and description; a zone's trust; a flow's label, protocol, encryption, authentication and data; a threat's title, STRIDE categories, rating (likelihood × impact before and after its controls, a risk tag, or a CVSS vector), status, controls, owner, mitigation and description. Each has its threats listed, with *New threat here*. Clicking an ID still shows the threat's footprint too.
+- **Add ▾** adds an element, a flow, a zone, a threat to the whole model, a control or a scenario. A box has *New flow from it* (to an existing element, or to *A new element…*, added with the flow and opened next for you to fill in) and, for a system or container, *New element inside*. **Model ▾** lists the zones, controls and scenarios (a scenario's steps are picked from the flows, in order) and the problems.
+- **Delete** boxes, zones, flows, threats, controls and scenarios. A box takes its flows, and anything inside it, with it, after asking.
+- **Undo and Redo** (the arrows in the editor's bar, or Ctrl+Z and Ctrl+Shift+Z while the editor is the active pane) take back the editor's changes. In Live Preview and Source mode, Ctrl+Z in the note takes them back too. If you have typed in the model since, the editor's undo stops, so as not to lose your typing.
+- **Problems:** the count in the editor's bar opens the errors, warnings and findings from the model; click one to go to its line. ***Show in text*** selects what you clicked in the model's text (from Reading view, the note switches to Live Preview).
+- **Open in the web editor** (the link button in the editor's bar, or the command) opens the model in the [web app](#the-web-app) in your browser. The model travels in the link itself, after the `#`, which browsers never send to a website: nothing is uploaded.
+- **Safe with your typing:** a change is written only if the model's text is still what the editor read; if you typed in it meanwhile, nothing is written and you are told. In Live Preview and Source mode a change goes through the note's editor, so it is an ordinary edit; in Reading view it is written into the file. Models in a callout or a list are kept that way. `.threat` files work the same, with Undo and Redo in the file's own bar too.
+
 ## Syntax highlighting
 
 The text of a threat model is coloured as you type: keywords, names, attributes, strings, comments and hashtags, with STRIDE letters, risks and sensitive-data tags in the same colours as the diagrams. The colours come from your theme's code colours.
@@ -121,7 +144,7 @@ To edit `.threat` files outside Obsidian, in VS Code for example, a PlantUML ext
 
 The same models and diagrams in a web page, for trying the language without Obsidian, or for people who don't use it: **[https://27escape.github.io/threat-model-obsidian/](https://27escape.github.io/threat-model-obsidian/)**. The diagrams fill the page, with the model's text beside them as you write (*Code* hides it, to give the diagrams the whole width), and the same views, threat register, findings and key as in Obsidian. *Report* shows the report in the page, to read, print or save as PDF (from the print dialog), or download as Markdown for Obsidian.
 
-- **Point and click:** click a box, a zone or an arrow on a diagram to change it (a box's name, technology, zone, icon, link and description; a zone's trust; a flow's label, protocol, whether it is encrypted or authenticated, and its data) and to see its threats and add one. *Zones* and *Controls*, at the top, list the model's zones and controls to change or add. Click a threat (its ID on a diagram, or its row in the threat register) to change it in a form: its title, STRIDE categories, how it is rated (likelihood and impact before and after its controls, a risk tag, or a CVSS vector, checked and explained as you type), status, controls, owner, mitigation and description, or to delete it. Boxes, flows and controls can be deleted too: a box takes its flows, and anything inside it, with it (after asking). Each form changes only what you changed in the text, and keeps the rest as you wrote it, comments and all. The STRIDE categories usual for what you clicked are marked. *Show in text* selects what you clicked in the model's text.
+- **Point and click:** click a box, a zone or an arrow on a diagram to change it (a box's name, technology, zone, icon, link and description; a zone's trust; a flow's label, protocol, whether it is encrypted or authenticated, and its data) and to see its threats and add one. *Model*, at the top, lists the model's zones and controls to change or add. Click a threat (its ID on a diagram, or its row in the threat register) to change it in a form: its title, STRIDE categories, how it is rated (likelihood and impact before and after its controls, a risk tag, or a CVSS vector, checked and explained as you type), status, controls, owner, mitigation and description, or to delete it. Boxes, flows and controls can be deleted too: a box takes its flows, and anything inside it, with it (after asking). Each form changes only what you changed in the text, and keeps the rest as you wrote it, comments and all. The STRIDE categories usual for what you clicked are marked. *Show in text* selects what you clicked in the model's text.
 - **Building without typing:** *Add* (at the top) adds an element, a flow, a zone, a threat to the whole model, a control or a scenario; a box's panel has *New flow from it* and, for a system or container, *New element inside*. *Model* lists the zones, controls and scenarios (a scenario's steps are chosen from the flows, in order), and the problems.
 - **Undo and redo** (the arrows at the top, or Ctrl+Z and Ctrl+Shift+Z) take back any change, typed or made in a form. The text has line numbers; click *Line N* on an error or a warning to go to it. The problems count, at the top, opens a list of errors, warnings and findings from the model, each going to its line.
 - **Getting it out:** from the models menu, *Copy a link to share* (the whole model is packed into the link itself, after the `#`, which browsers never send to a website: nothing is uploaded, and very large models make long links), *Download picture* of the diagram shown (SVG or PNG), and *Download threat register* as CSV for a spreadsheet or a ticket system. The full-screen button shows the diagrams alone.
@@ -142,6 +165,7 @@ The same models and diagrams in a web page, for trying the language without Obsi
 | --- | --- |
 | Insert an example threat model | Adds a small model where the cursor is |
 | Open the threat report of this note as a new note | The same as the *Report* button, for the first model in the note |
+| Open this threat model in the web editor | Opens the first model in the note (or the `.threat` file) in the [web app](#the-web-app), in your browser; nothing is uploaded |
 
 ## Settings
 

@@ -1,4 +1,4 @@
-# Point and click in Obsidian: the plan
+# Point and click in Obsidian: the plan (done, released in 0.3.0)
 
 Bringing the web editor's point-and-click editing into the plugin. Decided with Kevin on 24 November 2026; update
 this note as the work goes, and fold it into `architecture.md` once it is built.
@@ -63,7 +63,7 @@ that), the report shown in a page (the plugin saves the report as a note), the w
    (several blocks in a note, the note changed meanwhile, CRLF line endings, a block in a list or a callout,
    indented with `> `), and the panel following the redrawn block.
 4. **Extras** (built 24 November 2026: `editor-goto.js`, `share-link.js` shared with the web app, the *Open this threat model in the web editor* command and the editor's link button; tests in `test/editor-goto.test.mjs`; while the cursor is in a block's code in Live Preview, the block isn't drawn and the editor keeps working from the model as it was): problems list and go-to-line, *Show in text*, *Open in the web editor*.
-5. **Docs and release** (first: put back the sample vault's notes changed while trying the editor, `git restore -- "sample vault"`; `tools/release.sh` refuses a working tree with changes, but a committed test edit would slip through): README (the *Edit* switch, the panel, screenshots), release notes, `architecture.md`.
+5. **Docs and release** (done for 0.3.0; first: put back the sample vault's notes changed while trying the editor, `git restore -- "sample vault"`; `tools/release.sh` refuses a working tree with changes, but a committed test edit would slip through): README (the *Edit* switch, the panel, screenshots), release notes, `architecture.md`.
 
 ## Open questions
 
