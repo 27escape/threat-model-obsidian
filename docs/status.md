@@ -14,12 +14,12 @@ chat; update it when something here changes.
 - **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
   first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
   model without warnings, and icon names that survive Lucide's renames.
-- **Not released yet (web app only; the plugin's `main.js` is unchanged):** point and click for elements, zones, flows
+- **0.2.3, ready to release:** point and click for elements, zones, flows
   and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
   and errors that go to their line, a problems list, *Show in text*, the report shown in the page (print or save as
   PDF), pictures (SVG, PNG), the threat register as CSV, a share link with the model in it, earlier versions in the
   browser, full screen, Help with the language reference and keyboard shortcuts, and every overlay closing with Esc,
-  a click outside or its ✕. Needs release notes before the next release.
+  a click outside or its ✕. Release notes: `docs/release-notes/0.2.3.md`, with the plugin's fix for diagrams not drawn when another plugin's Markdown post-processor throws (Embedded Code Title 0.5.5); release with `tools/release.sh 0.2.3`.
 
 ## Decided
 

@@ -2,13 +2,15 @@
 
 # Threat Modelling
 
+**[Open the web editor →](https://27escape.github.io/threat-model-obsidian/)** Try it in your browser first: the same language, diagrams and report, with examples to start from, and you can build a model by pointing and clicking. Nothing to install, and nothing leaves your browser. See [The web app](#The%20web%20app).
+
 An Obsidian plugin for writing threat models in your notes. You describe a system in a `threat` code block: its people, systems, containers and data stores, the trust zones they run in, the data that flows between them, and the threats to each part. The plugin draws the model three ways, writes a report of it as a note when you ask, and checks it as you write.
 
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
-**Try it in your browser:** the [Threat Modelling web app](https://27escape.github.io/threat-model-obsidian/) has the same language, diagrams and report, with examples to start from. Nothing to install, and nothing leaves your browser. See [The web app](#The%20web%20app).
-
 > [!NOTE]
+> **0.2.3:** the [web editor](https://27escape.github.io/threat-model-obsidian/) can now build and change a model by pointing and clicking, undo and redo, print the report or save it as PDF, export pictures and the threat register, and share a model as a link. In Obsidian, diagrams are drawn even when another plugin's code-block processing fails. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.3.md).
+>
 > **0.2.2:** a [web app](https://27escape.github.io/threat-model-obsidian/); a skill for an AI such as Claude, to draft a threat model from a photo of a diagram or from your description; and two small fixes. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.2.md).
 >
 > **0.2.1:** the settings missing from the settings page in 0.2.0 are back, and a `.threat` file's tab has the plugin's own icon, `shield-half`. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.2.1.md).
