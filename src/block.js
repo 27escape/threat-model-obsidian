@@ -7,8 +7,10 @@
 // Used for "threat" code blocks and, inside TmFileView, for .threat files.
 
 class TmBlock extends MarkdownRenderChild {
-  constructor(plugin, el, source, sourcePath) {
+  /** ctx: the code block's context in a note (to find its lines when the editor writes a change), if it is one. */
+  constructor(plugin, el, source, sourcePath, ctx) {
     super(el);
+    this.ctx = ctx || null;
     this.plugin = plugin;
     this.source = source;
     this.sourcePath = sourcePath || '';

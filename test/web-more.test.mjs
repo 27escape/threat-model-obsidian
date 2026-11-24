@@ -8,7 +8,7 @@ import { load } from './load.mjs';
 
 const W = load(
   ['tmBuildModel', 'tmEditParse', 'twAddElement', 'twAddFlow', 'twAddScenario', 'twEditScenario', 'twDeleteScenario', 'twRegisterCsv', 'TwHistory'],
-  ['src/web/export.js', 'src/edit/history.js']
+  ['src/web/export.js']
 );
 const builds = (text) => {
   assert.deepEqual(W.tmBuildModel(text).errors, [], text);

@@ -247,6 +247,28 @@ if ((await source()).includes('Checked flow')) fail('Ctrl+Z did not undo');
 await p.keyboard.press('Control+Shift+z');
 await pause(300);
 if ((await source()) !== withFlow) fail('Ctrl+Shift+Z did not redo');
+// a flow to a new element: its fields show only for "A new element…"; both are written as one change, and the new
+// element is shown next, to fill in
+await pick('Add', 'Flow');
+const newRow = () => p.isVisible('.tw-panel .tm-form input[aria-label="New element: name"]');
+await p.selectOption('.tw-panel .tm-form select[aria-label=From]', 'checked_element');
+await p.selectOption('.tw-panel .tm-form select[aria-label=To]', { index: 0 });
+if (await newRow()) fail('the new element’s fields show with an existing element chosen');
+await p.selectOption('.tw-panel .tm-form select[aria-label=To]', '+new');
+if (!(await newRow())) fail('the new element’s fields do not show for “A new element…”');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(200);
+if (!/name/.test(await p.textContent('.tw-panel .tm-form-problem'))) fail('a new element without a name is not refused');
+await p.fill('.tw-panel .tm-form input[aria-label="New element: name"]', 'Checked target');
+await p.fill('.tw-panel .tm-form input[aria-label="What it does"]', 'Checked call');
+await p.click('.tw-panel .tm-form button[type=submit]');
+await pause(300);
+text = await source();
+if (!/\b(container|component|store) checked_target "Checked target"/.test(text) || !/checked_element -> checked_target "Checked call"/.test(text)) fail('the flow to a new element was not written');
+if ((await p.textContent('.tw-panel-head h2')) !== 'Checked target') fail('the new element is not shown after its flow is added');
+await p.click('.tw-tools button[aria-label^=Undo]');
+await pause(300);
+if ((await source()) !== withFlow) fail('one Undo does not take out both the new element and its flow');
 await pick('Model', 'Scenarios');
 await p.click('.tw-panel >> text=New scenario');
 await pause(150);
@@ -405,5 +427,5 @@ if ((await p.$$('.tw-menu-panel .tw-group:nth-child(3) .tw-item')).length) fail(
 
 await browser.close();
 for (const x of problems) console.log(`problem: ${x}`);
-console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
+console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, a flow to a new element, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
 process.exit(problems.length ? 1 : 0);

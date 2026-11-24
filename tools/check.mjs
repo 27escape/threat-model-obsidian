@@ -1,6 +1,7 @@
 // Checks the rules in CLAUDE.md that a test can't: node tools/check.mjs   (run after the build)
 // - the built main.js has no network, eval, shell, system notifications or HTML strings
-// - notes are written in one place only (src/report-note.js, when the user saves a report)
+// - notes are written in two places only, each on the user's say-so: src/report-note.js (saving a report) and
+//   src/editor-view.js (a change saved in the Threat model editor, written only into its own threat block)
 // - every src/*.js file is in tools/files.json, and no file is too long
 // - the web app (src/web, dist/web/index.html): the same rules, and a page that can't connect anywhere
 import fs from 'node:fs';
@@ -9,7 +10,7 @@ const o = JSON.parse(fs.readFileSync('tools/files.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(o.manifest, 'utf8'));
 const problems = [];
 const warn = [];
-const WRITES_ALLOWED_IN = ['src/report-note.js'];
+const WRITES_ALLOWED_IN = ['src/report-note.js', 'src/editor-view.js'];
 
 const main = `dist/${manifest.id}/main.js`;
 if (!fs.existsSync(main)) problems.push(`${main} missing: run node tools/build.mjs first`);

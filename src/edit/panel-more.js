@@ -48,33 +48,62 @@ Object.assign(TwEditPanel.prototype, {
     const m = this.models();
     if (!m) return;
     const { model } = m;
-    if (model.elements.length < 2) {
+    if (!model.elements.length) {
       this.open('New flow');
-      this.body.createEl('p', { text: 'A flow goes from one element to another: add two elements first.' });
+      this.body.createEl('p', { text: 'A flow goes from one element to another: add an element first.' });
       return;
     }
     this.showing = null;
     this.open('New flow');
     const ends = model.elements.map((e) => [e.id, `${e.title} (${e.kind})`]);
+    const from = o.from || ends[0][0];
+    const other = ends.find(([id]) => id !== from);
+    const start = tmElement(model, from);
+    // a new element at the other end: by default beside the one the flow starts from (inside the same parent)
+    const parents = model.elements.filter((e) => TM_CONTAINS[e.kind]);
+    const sibling = start && start.parent ? tmElement(model, start.parent) : null;
+    const kind = sibling ? TM_CONTAINS[sibling.kind][0] : 'container';
     const spec = [
-      { key: 'from', label: 'From', type: 'select', value: o.from || ends[0][0], options: ends },
-      { key: 'to', label: 'To', type: 'select', value: o.to || ends.find(([id]) => id !== (o.from || ends[0][0]))[0], options: ends },
+      { key: 'from', label: 'From', type: 'select', value: from, options: ends },
+      { key: 'to', label: 'To', type: 'select', value: o.to || (other ? other[0] : TW_NEW_END), options: [...ends, [TW_NEW_END, 'A new element…']] },
+      { key: 'newKind', label: 'New element: kind', type: 'select', value: kind, options: TM_KINDS.map((k) => [k, TW_KIND_NAMES[k]]), more: true },
+      { key: 'newTitle', label: 'New element: name', type: 'text', value: '', placeholder: 'Such as Payment provider, Orders database', more: true },
+      { key: 'newParent', label: 'New element: inside', type: 'select', value: sibling ? sibling.id : '', options: [['', 'Nothing (at the top level)'], ...parents.map((e) => [e.id, `${e.title} (${e.kind})`])], more: true },
+      { key: 'newZone', label: 'New element: zone', type: 'select', value: '', options: [['', 'None, or its parent’s'], ...model.zones.map((z) => [z.id, `${z.title}${z.trust ? ` (${z.trust})` : ''}`])], more: true, help: 'Its other details (technology, description, icon) can be filled in once it is added' },
       ...twFlowSpec({ attrs: {}, label: '' }),
     ];
-    twFormInto(this.body.createDiv(), spec, {
+    const form = twFormInto(this.body.createDiv(), spec, {
       submit: 'Add flow',
       onSave: (v) => {
         let added = null;
+        let made = null;
+        const fresh = v.to === TW_NEW_END;
         return this.apply(
           () => {
-            added = twAddFlow(this.host.text, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) });
+            let text = this.host.text;
+            if (fresh) {
+              if (!v.newTitle.trim()) throw new TmEditError('give the new element a name');
+              made = twAddElement(text, { kind: v.newKind, title: v.newTitle, parent: v.newParent, zone: v.newZone });
+              text = made.text;
+            }
+            added = twAddFlow(text, { ...v, to: fresh ? made.id : v.to, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) });
             return added.text;
           },
-          () => this.showItem({ type: 'flows', ns: [added.n] }, `Added flow ${added.n}`)
+          // a new element next, to fill in; otherwise the new flow
+          () =>
+            fresh
+              ? this.showItem({ type: 'element', id: made.id }, `Added ${v.newTitle.trim()} and flow ${added.n} to it: fill in its details here`)
+              : this.showItem({ type: 'flows', ns: [added.n] }, `Added flow ${added.n}`)
         );
       },
       onCancel: () => this.close(),
     });
+    // the new element's fields only while "A new element…" is chosen
+    const rows = form.querySelectorAll(':scope > .tm-form-row');
+    const to = form.querySelector('select[aria-label="To"]');
+    const showNew = () => spec.forEach((f, i) => f.more && rows[i] && rows[i].toggleClass('tw-hidden', to.value !== TW_NEW_END));
+    to.addEventListener('change', showNew);
+    showNew();
   },
 
   // ---- scenarios
@@ -228,4 +257,5 @@ Object.assign(TwEditPanel.prototype, {
   },
 });
 
+const TW_NEW_END = '+new'; // the To list's "A new element…" (no ID starts with +)
 const TW_KIND_NAMES = { person: 'Person', external: 'External system', system: 'Software system', container: 'Container', component: 'Component', store: 'Data store', queue: 'Queue' };

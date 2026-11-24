@@ -2,7 +2,8 @@
    place in the page is in web/more.css), in the Threat model editor in Obsidian's right sidebar. The forms inside it
    are styled by styles.css (.tm-form). */
 
-.tw-panel.tw-hidden {
+.tw-panel.tw-hidden,
+.tw-panel .tw-hidden {
   display: none;
 }
 

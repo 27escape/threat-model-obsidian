@@ -59,16 +59,17 @@ that), the report shown in a page (the plugin saves the report as a note), the w
    now (unit tests, `web-check.mjs`). Plugin `main.js` unchanged.
 2. **The panel in Obsidian, read-only first** (built 24 November 2026: `editor-view.js`, `obsidian-ui.js`, the Edit switch in `block.js`; to try in the sample vault): the sidebar view, the *Edit* switch, clicks mapped to items (the
    diagram IDs are already in place), the forms shown but Save turned off. Kevin tries it in the sample vault.
-3. **Writing:** the write-back above for notes and `.threat` files, with unit tests for finding and replacing a block
+3. **Writing** (built 24 November 2026: `note-write.js`, `writeModel` in `editor-view.js`, `setModelText` and Undo/Redo in `file-view.js`; tests in `test/note-write.test.mjs` and `test/editor-view.test.mjs`; blocks in callouts and lists are supported): the write-back above for notes and `.threat` files, with unit tests for finding and replacing a block
    (several blocks in a note, the note changed meanwhile, CRLF line endings, a block in a list or a callout,
    indented with `> `), and the panel following the redrawn block.
 4. **Extras:** problems list and go-to-line, *Show in text*, *Open in the web editor*.
-5. **Docs and release:** README (the *Edit* switch, the panel, screenshots), release notes, `architecture.md`.
+5. **Docs and release** (first: put back the sample vault's notes changed while trying the editor, `git restore -- "sample vault"`; `tools/release.sh` refuses a working tree with changes, but a committed test edit would slip through): README (the *Edit* switch, the panel, screenshots), release notes, `architecture.md`.
 
 ## Open questions
 
-- A threat block inside a callout or a list (each line starts `> ` or is indented): writing back must keep the
-  prefix on every line. Stage 3 handles it or refuses with a clear message; decide which when we get there.
+- A threat block inside a callout or a list: settled, the prefix (`> ` or the indent) is kept on every line.
+- Reading view: a change is written into the file (Obsidian's undo can't take that back); in Live Preview or Source
+  mode it goes through the editor, and Ctrl+Z takes it back.
 - Reading view vs Live Preview: both draw the block; the write-back works the same, but go-to-line needs the note
   in an editor (switch to Live Preview or Source mode first).
 - Mobile: the right sidebar is a drawer there; check it is usable before release.

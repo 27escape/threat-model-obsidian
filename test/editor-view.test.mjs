@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { load } from './load.mjs';
 
-const { ThreatModelPlugin } = load(['ThreatModelPlugin']);
+const { ThreatModelPlugin, TFile } = load(['ThreatModelPlugin', 'TFile']);
 const P = ThreatModelPlugin.prototype;
 
 function plugin() {
@@ -99,4 +99,94 @@ test('editor: opening another file closes the editor; the same file, or a click 
   p.editingFileOpened(null);
   assert.equal(p.editing, null);
   assert.equal(p.detached, 2);
+});
+
+/** A vault with one note, and (if `open`) that note open in an editor in Live Preview or Source mode. */
+function vault(text, open) {
+  const file = Object.assign(new TFile(), { path: 'Shop.md' });
+  const v = { text, writes: 0, edits: [] };
+  const editor = {
+    getValue: () => v.text,
+    replaceRange(insert, from, to) {
+      const lines = v.text.split('\n');
+      const before = lines.slice(0, from.line).join('\n');
+      const after = lines.slice(to.line).join('\n');
+      v.text = `${before}\n${insert}${after}`;
+      v.edits.push({ insert, from: from.line, to: to.line });
+    },
+  };
+  v.app = {
+    vault: {
+      getAbstractFileByPath: (p) => (p === file.path ? file : null),
+      process: async (f, fn) => {
+        v.writes++;
+        v.text = fn(v.text);
+        return v.text;
+      },
+    },
+    workspace: { getLeavesOfType: (t) => (t === 'markdown' && open ? [{ view: { file, editor, getMode: () => 'source' } }] : []) },
+  };
+  return v;
+}
+
+const NOTE = 'Notes\n\n```threat\nperson a "A"\n```\n\nMore\n';
+
+test('editor: a change is written into the note’s own block, through its editor when it is open there', async () => {
+  const v = vault(NOTE, true);
+  const p = Object.assign(plugin(), { app: v.app });
+  const b = { sourcePath: 'Shop.md', source: 'person a "A"', ctx: null };
+  assert.equal(await p.writeModel(b, 'person a "A"', 'person a "A"\nsystem s "S"\n'), '');
+  assert.equal(v.text, 'Notes\n\n```threat\nperson a "A"\nsystem s "S"\n```\n\nMore\n');
+  assert.deepEqual(v.edits, [{ insert: 'person a "A"\nsystem s "S"\n', from: 3, to: 4 }], 'only the block’s lines, through the editor');
+  assert.equal(v.writes, 0);
+  // the note changed meanwhile: nothing is written
+  assert.match(await p.writeModel(b, 'person a "A"', 'person a "B"'), /changed since/);
+});
+
+test('editor: with the note not open in an editor the file is changed; changes go one after another', async () => {
+  const v = vault(NOTE, false);
+  const p = Object.assign(plugin(), { app: v.app });
+  const b = { sourcePath: 'Shop.md', source: 'person a "A"', ctx: { getSectionInfo: () => ({ lineStart: 2 }) } };
+  // two saves made before the block is drawn again: the second is made from the first's text
+  const one = p.writeModel(b, 'person a "A"', 'person a "A"\nsystem s "S"');
+  const two = p.writeModel(b, 'person a "A"\nsystem s "S"', 'person a "A"\nsystem s "Shop"');
+  assert.deepEqual([await one, await two], ['', '']);
+  assert.equal(v.text, 'Notes\n\n```threat\nperson a "A"\nsystem s "Shop"\n```\n\nMore\n');
+  assert.equal(v.writes, 2);
+  assert.match(await p.writeModel({ sourcePath: 'Gone.md' }, 'x', 'y'), /couldn’t be found/);
+});
+
+test('editor: a .threat file takes the change itself', async () => {
+  const p = plugin();
+  const seen = [];
+  const b = { fileView: { setModelText: (was, now) => (seen.push([was, now]), '') } };
+  assert.equal(await p.writeModel(b, 'a', 'b'), '');
+  assert.deepEqual(seen, [['a', 'b']]);
+});
+
+test('editor: the plugin sets up what blocks need before it registers the block processor (it draws open notes at once)', async () => {
+  const p = Object.create(P);
+  let checked = false;
+  const nothing = () => {};
+  Object.assign(p, {
+    app: { workspace: { on: nothing } },
+    manifest: { name: 'Threat Modelling' },
+    loadData: async () => ({}),
+    registerMarkdownCodeBlockProcessor(lang, fn) {
+      // Obsidian draws the blocks of notes already open here: each block's onload asks about editing
+      assert.equal(typeof (p.liveBlocks && p.liveBlocks.add), 'function', 'liveBlocks is ready'); // a Set (from the test's other realm)
+      assert.equal(p.editing, null);
+      checked = true;
+    },
+    registerEditorExtension: nothing,
+    registerMarkdownPostProcessor: nothing,
+    registerHoverLinkSource: nothing,
+    registerView: nothing,
+    registerEvent: nothing,
+    registerExtensions: nothing,
+    addSettingTab: nothing,
+    addCommand: nothing,
+  });
+  await p.onload();
+  assert.ok(checked);
 });

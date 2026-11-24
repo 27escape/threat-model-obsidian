@@ -1,5 +1,6 @@
 // .threat files: opened in their own view, showing the model (as a threat block would) or its source to edit.
-// Edits are saved by Obsidian's TextFileView, as for any file you type in. The editor is a plain textarea with
+// Edits are saved by Obsidian's TextFileView, as for any file you type in. Changes from the Threat model editor come
+// in through setModelText; Undo and Redo, in the view's bar while there are any, take them back. The editor is a plain textarea with
 // the highlighted text drawn underneath it (the textarea's own text is transparent), kept in step as you type and scroll.
 
 class TmFileView extends TextFileView {
@@ -8,6 +9,7 @@ class TmFileView extends TextFileView {
     this.plugin = plugin;
     this.editing = false;
     this.block = null;
+    this.history = new TwHistory(); // changes made from the Threat model editor
   }
 
   getViewType() {
@@ -23,6 +25,9 @@ class TmFileView extends TextFileView {
   }
 
   onOpen() {
+    this.undoBtn = this.addAction('undo-2', 'Undo the last change made in the Threat model editor', () => this.undoRedo('undo'));
+    this.redoBtn = this.addAction('redo-2', 'Redo', () => this.undoRedo('redo'));
+    this.showUndo();
     this.toggle = this.addAction('pencil', 'Edit the threat model', () => {
       this.editing = !this.editing;
       this.refresh();
@@ -31,7 +36,11 @@ class TmFileView extends TextFileView {
 
   setViewData(data, clear) {
     this.data = data;
-    if (clear) this.editing = false;
+    if (clear) {
+      this.editing = false;
+      this.history.clear();
+      this.showUndo();
+    }
     this.refresh();
   }
 
@@ -67,6 +76,10 @@ class TmFileView extends TextFileView {
       paint();
       this.registerDomEvent(ta, 'input', () => {
         this.data = ta.value;
+        if (this.history.canUndo() || this.history.canRedo()) {
+          this.history.clear(); // typing has its own undo; the editor's changes before it can't be taken back now
+          this.showUndo();
+        }
         this.requestSave();
         paint();
       });
@@ -79,5 +92,32 @@ class TmFileView extends TextFileView {
     }
     const host = el.createDiv();
     this.block = this.addChild(new TmBlock(this.plugin, host, this.data || '', this.file ? this.file.path : ''));
+    this.block.fileView = this; // the Threat model editor writes through setModelText
+  }
+
+  /** A change from the Threat model editor: `now` in place of `was`, if the file still says `was`. '' or a problem. */
+  setModelText(was, now) {
+    if (!tmSameCode(this.data || '', was)) return 'The file has changed since the editor read it: nothing was written. Try again.';
+    this.history.record(this.data || '');
+    this.data = now;
+    this.requestSave();
+    this.refresh();
+    this.showUndo();
+    return '';
+  }
+
+  undoRedo(which) {
+    const text = which === 'undo' ? this.history.undo(this.data || '') : this.history.redo(this.data || '');
+    if (text === null) return;
+    this.data = text;
+    this.requestSave();
+    this.refresh();
+    this.showUndo();
+  }
+
+  /** Undo and Redo in the view's bar only while there is something to take back or put back. */
+  showUndo() {
+    if (this.undoBtn) this.undoBtn.toggle(this.history.canUndo());
+    if (this.redoBtn) this.redoBtn.toggle(this.history.canRedo());
   }
 }

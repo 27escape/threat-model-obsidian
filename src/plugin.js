@@ -24,9 +24,15 @@ class ThreatModelPlugin extends Plugin {
     if (this.settings.reportLocation === 'beside') this.settings.reportLocation = 'reports';
     // what each block was last showing, so editing a note doesn't send it back to the default view
     this.blockState = new Map();
+    // the Threat model editor's state (editor-view.js), before the block processor: registering it draws the threat
+    // blocks of notes already open straight away, and each block looks for the model being edited
+    tmApp = this.app; // for twConfirm (obsidian-ui.js)
+    this.editing = null; // the block being edited
+    this.editingKey = null;
+    this.liveBlocks = new Set(); // the threat blocks drawn now, to find a model's block again when it is redrawn
 
     this.registerMarkdownCodeBlockProcessor('threat', (source, el, ctx) => {
-      ctx.addChild(new TmBlock(this, el, source, ctx.sourcePath));
+      ctx.addChild(new TmBlock(this, el, source, ctx.sourcePath, ctx));
     });
     this.registerEditorExtension(tmEditorExtension());
     this.registerEditorExtension(tmDiagramEditorExtension(this)); // the same for diagrams in Live Preview
@@ -42,10 +48,6 @@ class ThreatModelPlugin extends Plugin {
       ctx.addChild(child);
       tmNoteLinks(this, ctx.sourcePath).then((links) => links && stop.link(links), () => {});
     });
-    tmApp = this.app; // for twConfirm (obsidian-ui.js)
-    this.editing = null; // the block being edited in the Threat model editor (editor-view.js)
-    this.editingKey = null;
-    this.liveBlocks = new Set(); // the threat blocks drawn now, to find a model's block again when it is redrawn
     this.registerView(TM_EDITOR_VIEW, (leaf) => new TmEditorView(leaf, this));
     this.registerEvent(this.app.workspace.on('file-open', (file) => this.editingFileOpened(file)));
     this.registerView(TM_FILE_VIEW, (leaf) => new TmFileView(leaf, this));

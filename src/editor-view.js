@@ -1,16 +1,18 @@
 // The Threat model editor: the point-and-click panel (src/edit/) in the right sidebar, editing the threat block whose
 // Edit switch is on (block.js). The view is the panel's host (see edit-panel.js): it gives the panel that block's
 // text. One block is edited at a time; turning Edit on in another moves the editor there.
-// Stage 2 of docs/editor-in-obsidian.md: everything is shown, but nothing is saved yet (readOnly says why).
+// A change saved in the panel is written into the note (writeModel, below, with note-write.js): through the note's
+// editor when it is open there, so Obsidian's undo takes it back, otherwise into the file; a .threat file's view
+// takes it itself (file-view.js). Until Obsidian draws the block again, the panel works from the new text.
 
 const TM_EDITOR_VIEW = 'threat-model-editor';
-const TM_EDITOR_READ_ONLY = 'Saving from here isn’t turned on yet in this version: change the model in its text for now.';
 
 class TmEditorView extends ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
     this.block = null;
+    this.pending = null; // text written but not yet drawn again
   }
 
   getViewType() {
@@ -44,14 +46,27 @@ class TmEditorView extends ItemView {
   // ---- the panel's host
 
   get text() {
+    if (this.pending !== null) return this.pending;
     return this.block ? this.block.source : '';
   }
 
-  get readOnly() {
-    return TM_EDITOR_READ_ONLY;
+  /** Write the panel's change; if it can't be written, say why and show the model as it is. */
+  setText(text) {
+    const block = this.block;
+    if (!block) return;
+    const was = this.text;
+    this.pending = text;
+    this.plugin.writeModel(block, was, text).then(
+      (problem) => problem && this.writeFailed(problem),
+      (e) => this.writeFailed(`The change couldn’t be written: ${e && e.message ? e.message : e}`)
+    );
   }
 
-  setText() {} // nothing is saved yet (readOnly)
+  writeFailed(problem) {
+    this.pending = null;
+    new Notice(problem);
+    if (this.panel) this.panel.redraw();
+  }
 
   opened(on) {
     this.hint.toggleClass('tw-hidden', !!on);
@@ -63,6 +78,7 @@ class TmEditorView extends ItemView {
   follow(block) {
     const same = this.block && block && this.block.state && block.state && this.block.state.key === block.state.key;
     this.block = block;
+    if (!same || (block && this.pending !== null && tmSameCode(block.source, this.pending))) this.pending = null; // drawn with the change
     if (!this.panel) return;
     this.drawBar();
     if (!block) this.panel.close();
@@ -101,7 +117,6 @@ class TmEditorView extends ItemView {
     problems.addClass('tm-editor-problems');
     problems.toggleClass('is-error', block.errors.length > 0);
     problems.toggleClass('is-none', !n);
-    bar.createDiv({ cls: 'tm-editor-readonly', text: TM_EDITOR_READ_ONLY });
   }
 
   problemCount() {
@@ -192,6 +207,42 @@ Object.assign(ThreatModelPlugin.prototype, {
     if (this.editing !== block) return;
     const view = this.editorViewIfOpen();
     if (view && view.panel) view.panel.showThreat({ id });
+  },
+
+  /**
+   * Write `now` in place of `was` in the block's note (or .threat file). Changes go one after another, each checked
+   * against the text it was made from. Resolves with a problem to show, or '' once written.
+   */
+  writeModel(block, was, now) {
+    const run = () => (block.fileView ? block.fileView.setModelText(was, now) : this.writeNote(block, was, now));
+    this.writing = (this.writing || Promise.resolve()).then(run, run);
+    return this.writing;
+  },
+
+  async writeNote(block, was, now) {
+    const file = this.app.vault.getAbstractFileByPath(block.sourcePath);
+    if (!(file instanceof TFile)) return 'The note couldn’t be found: nothing was written.';
+    const info = block.ctx && block.ctx.getSectionInfo ? block.ctx.getSectionInfo(block.containerEl) : null;
+    const near = info ? info.lineStart : null;
+    // open in an editor (Live Preview or Source mode): through it, on the block's own lines, so undo takes it back
+    const view = this.app.workspace
+      .getLeavesOfType('markdown')
+      .map((l) => l.view)
+      .find((v) => v && v.file && v.file.path === file.path && v.editor && v.getMode && v.getMode() === 'source');
+    if (view) {
+      const editor = view.editor;
+      const plan = tmPlanBlockWrite(editor.getValue(), was, now, near);
+      if (plan.problem) return plan.problem;
+      editor.replaceRange(`${plan.lines.join('\n')}\n`, { line: plan.block.open + 1, ch: 0 }, { line: plan.block.close, ch: 0 });
+      return '';
+    }
+    let problem = '';
+    await this.app.vault.process(file, (text) => {
+      const r = tmWriteBlock(text, was, now, near);
+      if (r.problem) problem = r.problem;
+      return r.problem ? text : r.text;
+    });
+    return problem;
   },
 
   editorViewIfOpen() {
