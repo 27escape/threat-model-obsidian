@@ -42,6 +42,12 @@ class ThreatModelPlugin extends Plugin {
       ctx.addChild(child);
       tmNoteLinks(this, ctx.sourcePath).then((links) => links && stop.link(links), () => {});
     });
+    tmApp = this.app; // for twConfirm (obsidian-ui.js)
+    this.editing = null; // the block being edited in the Threat model editor (editor-view.js)
+    this.editingKey = null;
+    this.liveBlocks = new Set(); // the threat blocks drawn now, to find a model's block again when it is redrawn
+    this.registerView(TM_EDITOR_VIEW, (leaf) => new TmEditorView(leaf, this));
+    this.registerEvent(this.app.workspace.on('file-open', (file) => this.editingFileOpened(file)));
     this.registerView(TM_FILE_VIEW, (leaf) => new TmFileView(leaf, this));
     this.registerExtensions(['threat'], TM_FILE_VIEW);
     this.addSettingTab(new TmSettingTab(this.app, this));

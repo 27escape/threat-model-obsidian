@@ -9,7 +9,8 @@ class TwEditPanel {
   /**
    * host: what the panel edits, the web page or (later) a block in Obsidian. It gives the model's text and takes a
    * new one: { text, setText(text), showInText(ref), showLine(n), opened(on) }; opened(on) is told when the panel
-   * opens or closes, to make room for it. Closing with Escape is the host's to arrange.
+   * opens or closes, to make room for it. Closing with Escape is the host's to arrange. A host without showInText or
+   * showLine gets no buttons for them; one whose readOnly is a reason (text) saves nothing and says why.
    */
   constructor(host, parent) {
     this.host = host;
@@ -70,6 +71,7 @@ class TwEditPanel {
 
   /** Make an edit: refused, with the reason, if it fails or adds errors; otherwise the text changes and then() runs. */
   apply(edit, then) {
+    if (this.host.readOnly) return this.host.readOnly;
     let text;
     try {
       text = edit();
@@ -100,7 +102,7 @@ class TwEditPanel {
       for (const f of flows) {
         const box = this.body.createDiv({ cls: 'tw-panel-section' });
         box.createEl('h3', { text: `(${f.n}) ${tmTitleOf(model, f.from)} → ${tmTitleOf(model, f.to)}` });
-        twButton(box, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText({ type: 'flow', n: f.n }), 'text-cursor-input').addClass('tw-small');
+        if (this.host.showInText) twButton(box, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText({ type: 'flow', n: f.n }), 'text-cursor-input').addClass('tw-small');
         this.details(box, 'Details', flows.length === 1, (el) =>
           twFormInto(el, twFlowSpec(raw.flows[f.n - 1]), {
             onSave: (v) => this.apply(() => twEditFlow(this.host.text, f.n, { ...v, encrypted: twFromYesNo(v.encrypted), authenticated: twFromYesNo(v.authenticated) }), again('Saved')),

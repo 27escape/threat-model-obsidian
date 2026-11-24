@@ -6,8 +6,7 @@ import fs from 'node:fs';
 import { load } from './load.mjs';
 
 const W = load(
-  ['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditElement', 'twEditZone', 'twEditFlow', 'twEditControl', 'twAddControl', 'twDeleteControl', 'twNextId', 'twElementSpec', 'twZoneSpec', 'twFlowSpec', 'twControlSpec', 'twFromYesNo'],
-  ['src/edit/item-edits.js', 'src/edit/item-forms.js']
+  ['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditElement', 'twEditZone', 'twEditFlow', 'twEditControl', 'twAddControl', 'twDeleteControl', 'twNextId', 'twElementSpec', 'twZoneSpec', 'twFlowSpec', 'twControlSpec', 'twFromYesNo']
 );
 
 const SRC = `zone web "Web" { trust = "untrusted" }
@@ -107,7 +106,7 @@ test('web edits: every form of every sample model, saved as it opens, changes no
   assert.ok(n > 60);
 });
 
-const R = load(['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditThreat', 'twAddThreat', 'twSetRating', 'twAddZone', 'twDeleteZone', 'twIdFrom', 'tmThreatFields'], ['src/edit/item-edits.js', 'src/edit/item-forms.js', 'src/edit/threat-form.js']);
+const R = load(['tmBuildModel', 'tmFirstBlock', 'tmEditParse', 'twEditThreat', 'twAddThreat', 'twSetRating', 'twAddZone', 'twDeleteZone', 'twIdFrom', 'tmThreatFields']);
 const RATED = `zone web "Web"
 person u "U" { zone = web }
 container a "A"

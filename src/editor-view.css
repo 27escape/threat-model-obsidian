@@ -1,0 +1,67 @@
+/* The Threat model editor in the right sidebar (editor-view.js): what is being edited and the tools, a hint while
+   nothing is open, then the panel (edit/panel.css). And the Edit switch in a threat block's bar. */
+
+.tm-editor-view {
+  padding: var(--size-4-3);
+}
+.tm-editor-bar:empty {
+  display: none;
+}
+.tm-editor-bar {
+  margin-bottom: var(--size-4-3);
+  padding-bottom: var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-editor-where {
+  margin-bottom: var(--size-4-2);
+}
+.tm-editor-title {
+  font-weight: var(--font-semibold);
+}
+.tm-editor-file {
+  color: var(--text-muted);
+}
+.tm-editor-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tm-editor-tools button {
+  padding: 2px 8px;
+  font-size: var(--font-ui-smaller);
+}
+.tm-editor-tools button .svg-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+.tm-editor-tools button .svg-icon + span {
+  margin-left: 4px;
+}
+.tm-editor-problems {
+  color: var(--color-orange);
+}
+.tm-editor-problems.is-error {
+  color: var(--text-error);
+}
+.tm-editor-problems.is-none {
+  color: var(--text-muted);
+}
+.tm-editor-readonly {
+  margin-top: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+.tm-editor-hint {
+  color: var(--text-muted);
+}
+.tm-editor-hint.tw-hidden {
+  display: none;
+}
+
+/* the Edit switch, pressed while the block is being edited, and the block's outline then */
+.tm-block.tm-editing {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-s);
+}

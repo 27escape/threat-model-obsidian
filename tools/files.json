@@ -25,7 +25,15 @@
     "src/risk-matrix.js",
     "src/threat-table.js",
     "src/plugin.js",
+    "src/editor-view.js",
     "src/mermaid-draw.js",
+    "src/edit/threat-form.js",
+    "src/edit/item-edits.js",
+    "src/edit/item-forms.js",
+    "src/edit/add-edits.js",
+    "src/edit/edit-panel.js",
+    "src/edit/panel-more.js",
+    "src/obsidian-ui.js",
     "src/block.js",
     "src/legend.js",
     "src/file-view.js",
@@ -38,7 +46,9 @@
     "src/settings.js"
   ],
   "css": [
-    "src/styles.css"
+    "src/styles.css",
+    "src/edit/panel.css",
+    "src/editor-view.css"
   ],
   "web": {
     "out": "dist/web/index.html",

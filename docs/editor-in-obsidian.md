@@ -8,6 +8,7 @@ this note as the work goes, and fold it into `architecture.md` once it is built.
 - **An *Edit* switch** in each threat block's toolbar (and in a `.threat` file's view). With it off, a diagram behaves
   as now: a threat ID shows its footprint, and nothing can change the note. With it on, a click on a box, a zone, an
   arrow or a threat opens it in the editor panel. The switch is not remembered: every block opens with it off.
+  Opening another file closes the editor (and turns the switch off), so it never shows a model that isn't in front.
 - **The editor panel in the right sidebar** (*Threat model editor*, like Outline or Backlinks), following the block
   whose *Edit* switch is on. It has everything the web editor's panel has: forms for elements, zones, flows, threats
   (likelihood × impact, a risk tag or a CVSS vector) and controls; adding elements, flows, zones, threats, controls
@@ -56,7 +57,7 @@ that), the report shown in a page (the plugin saves the report as a note), the w
 
 1. **Move and decouple** (done, 24 November 2026; no change for users): `src/edit/` with the host interface; the web app works exactly as
    now (unit tests, `web-check.mjs`). Plugin `main.js` unchanged.
-2. **The panel in Obsidian, read-only first:** the sidebar view, the *Edit* switch, clicks mapped to items (the
+2. **The panel in Obsidian, read-only first** (built 24 November 2026: `editor-view.js`, `obsidian-ui.js`, the Edit switch in `block.js`; to try in the sample vault): the sidebar view, the *Edit* switch, clicks mapped to items (the
    diagram IDs are already in place), the forms shown but Save turned off. Kevin tries it in the sample vault.
 3. **Writing:** the write-back above for notes and `.threat` files, with unit tests for finding and replacing a block
    (several blocks in a note, the note changed meanwhile, CRLF line endings, a block in a list or a callout,

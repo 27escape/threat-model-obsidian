@@ -2,6 +2,8 @@
 // and the Threats and Compact switches) and, last, the Report button, then the chosen diagram, its threat register (the threats it
 // shows: threat-table.js) and its key (legend.js). Diagrams are Mermaid, drawn by Obsidian's own Markdown renderer.
 // The report is never shown in the block: its button saves it as a note and opens that in a new tab (report-note.js).
+// In Obsidian, an Edit switch before Report opens the model in the Threat model editor (editor-view.js); while it is
+// on, a click on a box, a zone, an arrow, a threat ID or a row of the threat register opens that there.
 // Used for "threat" code blocks and, inside TmFileView, for .threat files.
 
 class TmBlock extends MarkdownRenderChild {
@@ -44,6 +46,13 @@ class TmBlock extends MarkdownRenderChild {
     for (const id of TM_DIAGRAM_VIEWS) this.viewSelect.createEl('option', { value: id, text: TM_VIEW_NAMES[id] });
     this.registerDomEvent(this.viewSelect, 'change', () => this.choose({ view: this.viewSelect.value }));
     this.extra = this.bar.createDiv({ cls: 'tm-group tm-extra' });
+    if (this.plugin.startEditing) {
+      this.editBtn = this.bar.createEl('button', { cls: 'tm-btn tm-toggle tm-edit-btn', text: 'Edit' });
+      this.editBtn.setAttr('aria-label', 'Change the model by clicking its diagram, in the Threat model editor (right sidebar)');
+      this.registerDomEvent(this.editBtn, 'click', () => (this.editing ? this.plugin.stopEditing(this) : this.plugin.startEditing(this)));
+      this.setEditing(false);
+      this.registerDomEvent(el, 'click', (e) => this.clicked(e));
+    }
     const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
     report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
     this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
@@ -53,6 +62,33 @@ class TmBlock extends MarkdownRenderChild {
     this.legend = el.createDiv({ cls: 'tm-legend' });
     if (this.warnings.length && this.plugin.settings.showWarnings) this.showWarnings(el);
     this.draw();
+    if (this.plugin.editingRedrawn) this.plugin.editingRedrawn(this);
+  }
+
+  onunload() {
+    if (this.plugin.liveBlocks) this.plugin.liveBlocks.delete(this);
+    if (this.plugin.editingGone) this.plugin.editingGone(this);
+  }
+
+  /** The Edit switch, on or off (the plugin keeps which block is being edited: editor-view.js). */
+  setEditing(on) {
+    this.editing = !!on;
+    this.containerEl.toggleClass('tm-editing', this.editing);
+    if (!this.editBtn) return;
+    this.editBtn.toggleClass('is-active', this.editing);
+    this.editBtn.setAttr('aria-pressed', String(this.editing));
+  }
+
+  /** A click on the block while editing: a row of the threat register, or a box, zone or arrow on the diagram. */
+  clicked(e) {
+    if (!this.editing || !(e.target instanceof Element)) return;
+    const view = this.plugin.editorViewIfOpen();
+    if (!view || !view.panel) return;
+    const row = e.target.closest('tr[data-tm-threat]');
+    if (row) return view.panel.showThreat({ id: row.getAttribute('data-tm-threat') });
+    if (!e.target.closest('.mermaid svg')) return;
+    const item = twClickedItem(this.model, e.target);
+    if (item) view.panel.showItem(item);
   }
 
   choose(change) {

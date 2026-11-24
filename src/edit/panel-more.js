@@ -4,7 +4,7 @@ Object.assign(TwEditPanel.prototype, {
   /** A small "Show in text" button at the top of the panel, selecting the statement in the editor. */
   inText(ref) {
     const row = this.body.createDiv({ cls: 'tw-panel-row' });
-    twButton(row, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText(ref), 'text-cursor-input');
+    if (this.host.showInText) twButton(row, 'Show in text', 'Select its statement in the model’s text', () => this.host.showInText(ref), 'text-cursor-input');
     return row;
   },
 
@@ -212,7 +212,7 @@ Object.assign(TwEditPanel.prototype, {
         const b = list.createEl('li').createEl('button', { type: 'button', cls: `tw-threat ${cls}` });
         if (it.line) b.createSpan({ cls: 'tm-threat-id', text: `Line ${it.line}` });
         b.createSpan({ cls: 'tw-threat-title', text: it.message });
-        if (it.line) b.addEventListener('click', () => this.host.showLine(it.line));
+        if (it.line && this.host.showLine) b.addEventListener('click', () => this.host.showLine(it.line));
         else b.disabled = true;
       }
     };
@@ -224,7 +224,7 @@ Object.assign(TwEditPanel.prototype, {
     section('Errors', errors, 'tw-problem-error');
     section('Warnings', warnings, 'tw-problem-warning');
     section('Findings from the model', findings, 'tw-problem-finding');
-    this.body.createEl('p', { cls: 'tw-note', text: 'Click one to go to its line in the text. Findings are prompts: write a threat for each that matters, or say on the flow what the model doesn’t (such as its protocol).' });
+    this.body.createEl('p', { cls: 'tw-note', text: `${this.host.showLine ? 'Click one to go to its line in the text. ' : ''}Findings are prompts: write a threat for each that matters, or say on the flow what the model doesn’t (such as its protocol).` });
   },
 });
 

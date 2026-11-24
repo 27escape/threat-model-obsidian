@@ -94,6 +94,19 @@
   background: var(--background-modifier-border);
 }
 
+/* ---- the edit panel's place: in the text's place while it is open (the panel itself: edit/panel.css) */
+.tw-panel-open .tw-main {
+  grid-template-columns: minmax(380px, 1.5fr) minmax(340px, 1fr);
+}
+.tw-panel-open .tw-edit {
+  display: none;
+}
+.tw-main > .tw-panel {
+  padding: var(--size-4-3) var(--size-4-4);
+  border-left: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
 /* ---- problems badge, full screen */
 .tw-problems {
   color: rgb(var(--color-orange-rgb));
@@ -171,48 +184,6 @@
   to {
     box-shadow: 0 0 0 0 transparent;
   }
-}
-
-/* ---- the panel's extras */
-.tw-panel-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: var(--size-4-2) 0;
-}
-.tw-panel-row button,
-.tw-small {
-  padding: 2px 8px;
-  font-size: var(--font-ui-smaller);
-}
-.tw-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.tw-step {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.tw-step select {
-  flex: 1;
-  min-width: 0;
-}
-.tw-step button {
-  padding: 2px 5px;
-}
-.tw-step-n {
-  min-width: 1.6em;
-  text-align: right;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-.tw-problem-error .tm-threat-id {
-  color: var(--text-error);
-}
-.tw-problem-warning .tm-threat-id {
-  color: rgb(var(--color-orange-rgb));
 }
 
 /* ---- earlier versions */
