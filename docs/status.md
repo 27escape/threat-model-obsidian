@@ -74,34 +74,46 @@ chat; update it when something here changes.
 
 ## Ideas to consider
 
-- **Icon suggestions in the editor's Icon field** (asked 25 November 2026, for later): as you type, a list of
-  matching Lucide icons, each drawn beside its name, the technology's default icon first. Obsidian: an
-  `AbstractInputSuggest` on the field (already used by the settings), names from `getIconIds()`, drawn with
-  `setIcon`. Web app: the same list from the bundled `TW_LUCIDE` names (and old names), in a small dropdown under the
-  field (a `<datalist>` can't show the icons). One shared suggestion function, two small hosts; a few hours with tests.
+Reviewed with Kevin on 25 November 2026, one by one. Held ideas want a conversation before any work.
 
-Not agreed; each wants a conversation before any work.
+### Held for the future
 
-1. **A compact sequence diagram in saved reports,** for long scenarios (Internet banking's is long).
-2. **Filters:** show only threats of high risk and above, or of one STRIDE category, on a busy diagram.
-3. **Trust zones in the Structure view,** not only in the Data flow and Sequence views, so a C4 reader sees the boundaries.
-4. **A left-to-right layout option** for large models.
-5. **What changed since the last report:** new, closed and re-rated threats, by comparing with the previous report.
-6. **CSV export** of the threat register, for Jira or a spreadsheet.
-7. **References on threats:** CWE or CAPEC numbers, and links to tickets.
-8. **Data assets as things of their own** (named, with how confidential and how important their integrity is), so the
-   model can tell where each one travels; today sensitive data is marked with hashtags.
-9. **A visual editor for threats, controls and elements,** opened from the diagram: click a box, arrow or threat ID
-   to edit it in a form, or add a threat to it, without writing the language by hand. Ideas to take from OWASP
-   Threat Dragon (open source, Apache 2.0; https://owasp.org/www-project-threat-dragon/docs-2/): select an element
-   to see its properties and its threats, a *New threat* button for the selected element, STRIDE categories offered
-   per kind of element ("STRIDE per element"), and an out-of-scope flag. OWASP Precogly (Apache 2.0) is a newer one
-   with a richer diagram editor. Constraints here: the model stays text; a save changes only the statement edited
-   (keeping the user's comments and layout) and only when the user saves; never the note being typed in.
-10. CLI to generate diagrams and reports from .threat files
-11. ~~An AI skill to draft models from a photo or a description~~: done, in `skills/threat-model/` (see *Released*).
-12. **A standalone web app** for writing models and exporting them: see *Decided*.
+1. **Icon suggestions in the editor's Icon field:** as you type, a list of matching Lucide icons, each drawn beside
+   its name, the technology's default icon first. Obsidian: an `AbstractInputSuggest` on the field (already used by
+   the settings), names from `getIconIds()`, drawn with `setIcon`. Web app: the same list from the bundled
+   `TW_LUCIDE` names (and old names), in a small dropdown under the field (a `<datalist>` can't show the icons). One
+   shared suggestion function, two small hosts; a few hours with tests.
+2. **The web app's export options in the plugin:** the diagram shown as SVG or PNG, and the threat register as CSV,
+   saved beside the note (commands, perhaps buttons). The web app has them all (`web/export.js`); in Obsidian today,
+   *Open in the web editor* gets there. No need yet; others may want it if they start using the plugin.
+3. **Filters on a busy diagram:** only threats of high risk and above, or of one STRIDE category. Scenarios, the
+   footprint of one threat and the *Threats* switch cover much of it for now.
+4. **References on threats:** CWE or CAPEC numbers and ticket links (`refs = […]`), shown as links in the register,
+   the report and the CSV, with a field in the threat form. No requirement yet.
+5. **Data assets as things of their own:** each piece of data declared once (how confidential, how important its
+   integrity) and referred to from flows and stores, so the model knows where each travels; today sensitive data is
+   marked with hashtags. A language change, one to two days. Kevin wants to understand how it affects things first:
+   start with a short note showing a model both ways, and what changes in the diagrams, report and findings.
 
+### No longer required
+
+- **A compact sequence diagram in saved reports:** *Compact*, the zoom buttons and one scenario at a time cover long
+  diagrams.
+- **A left-to-right layout option:** zoom, *Fit* and scenarios do the job.
+- **What changed since the last report:** models live in git (GitHub or similar), whose history shows what changed;
+  the diagrams are the point of reference.
+- **A command-line tool for diagrams and reports:** the web app exports pictures, the register and the report.
+
+### Done
+
+- **Trust zones in the Structure view:** 0.3.0 (nested-zone ratings in 0.3.1).
+- **A visual editor for threats, controls and elements:** the web app in 0.2.3, Obsidian in 0.3.0 (the Threat model
+  editor). An out-of-scope flag on single elements wasn't built; a model's `scope` and `out_of_scope` describe it.
+- **CSV export of the threat register:** in the web app (the plugin's is idea 2 above).
+- **An AI skill to draft models from a photo or a description:** `skills/threat-model/`, 0.2.2; scenarios and nested
+  zones in 0.3.1.
+- **A standalone web app:** https://27escape.github.io/threat-model-obsidian/, since 0.2.2; also attached to each
+  release and committed as `web/threat-modelling.html`.
 
 ## Checks to run
 
