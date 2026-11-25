@@ -19,10 +19,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
       - name: Build
         run: node tools/build.mjs
       - name: The web app page (Pele and the Lucide icons, at the versions it is tested with)
@@ -42,7 +42,7 @@ jobs:
           node --test test/*.test.mjs
           node tools/check.mjs dist
       - name: Attest the release files
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             dist/${{ steps.m.outputs.id }}/main.js
