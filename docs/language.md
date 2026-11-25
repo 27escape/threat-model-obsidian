@@ -234,7 +234,28 @@ webapp -> gateway "Signs in"
 
 ![The Data flow view of the zones example](images/language-zones-dataflow.svg)
 
-An element without a zone takes its parent's zone. Zones can be nested inside zones. `trust` is free text, shown on the Data flow view and in the report.
+An element without a zone takes its parent's zone. `trust` is free text, shown on the Data flow view and in the report.
+
+Zones can be nested inside zones, for a boundary inside a boundary, such as two regions of one cloud account:
+
+```threat
+zone internet "Internet" { trust = "untrusted" }
+zone aws "AWS (private)" { trust = "restricted"
+  zone west1 "us-west-1" {
+    container api "API"
+    store db1 "Orders"
+  }
+  zone west2 "us-west-2" {
+    store db2 "Orders replica"
+  }
+}
+person user "Customer" { zone = internet }
+
+user -> api "Places an order" { protocol = "HTTPS" }
+db1 -> db2 "Replicates" { protocol = "TLS"  data = ["Orders #pii"] }
+```
+
+A flow between two elements in different zones crosses a zone boundary. When both ends are inside the same outer zone (*Replicates*, between the regions but inside AWS), the crossing stays inside that zone: its findings are a step less serious than those of a flow going out of or into a zone altogether (*Places an order*), say which zone it stays inside, and the report lists such flows after the others, with the zone in a *Stays inside* column.
 
 ## Flows
 
@@ -427,9 +448,9 @@ Some risks follow from facts the model already holds, whether or not anyone has 
 
 | Finding | Risk |
 | --- | --- |
-| Sensitive data (`#secret`, `#pii`, `#confidential`) on a flow that isn't encrypted | High across a zone boundary, otherwise medium |
+| Sensitive data (`#secret`, `#pii`, `#confidential`) on a flow that isn't encrypted | High across a zone boundary, otherwise medium (also medium between zones that are both inside another zone) |
 | Sensitive data crossing a zone boundary on a flow whose encryption isn't known | Low: give it a `protocol`, or `encrypted = true` or `false` |
-| A flow marked `authenticated = false` that crosses a zone boundary or writes to a store | High across a boundary, otherwise medium |
+| A flow marked `authenticated = false` that crosses a zone boundary or writes to a store | High across a boundary, otherwise medium (also medium between zones that are both inside another zone) |
 | A store written straight from a zone whose `trust` says untrusted, with no process in between | Medium |
 
 They are prompts, not threats: write a threat (and a control) for each that matters, or set `encrypted` or `authenticated` where the model doesn't say.

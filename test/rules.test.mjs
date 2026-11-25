@@ -66,3 +66,53 @@ test('findings in the report: their own section, a line under Needs action, and 
   assert.match(r, /- 5 findings from the model to look at/);
   assert.match(r, /## Findings from the model\n\n[^\n]*\n\n- \*\*High\*\* — \(2\) Web → API carries Session without encryption, across a zone boundary\n/);
 });
+
+test('nested zones: a crossing between zones inside another is rated a step lower, says which zone it stays inside, and the report lists those last', () => {
+  const { model, errors } = tmBuildModel(`
+zone internet "Internet" { trust = "untrusted" }
+zone aws "AWS (private)" {
+  zone west1 "us-west-1" {
+    container api "API"
+    store db1 "Orders"
+  }
+  zone west2 "us-west-2" {
+    store db2 "Orders replica"
+  }
+}
+person user "Customer" { zone = internet }
+container ops "Ops box" { zone = aws }
+
+user -> api "Orders" { encrypted = false  data = ["Card #secret"] }
+db1 -> db2 "Replicates" { encrypted = false  data = ["Orders #pii"] }
+api -> db1 "Saves" { encrypted = false  data = ["Orders #pii"] }
+ops -> db2 "Checks" { authenticated = false }
+db2 -> user "Leaks" { authenticated = false }
+`);
+  assert.deepEqual(errors, []);
+  const flows = model.flows.map((f) => [f.n, f.crosses, f.crossing && f.crossing.within]);
+  assert.deepEqual(flows, [
+    [1, true, null], // into AWS from the internet: out of and into zones altogether
+    [2, true, 'aws'], // between the regions, inside AWS
+    [3, false, null], // inside us-west-1
+    [4, true, 'aws'], // from AWS itself into one of its regions: still inside AWS
+    [5, true, null],
+  ]);
+  const found = Object.fromEntries(model.findings.map((f) => [`${f.rule} ${f.flow}`, [f.risk, f.message]]));
+  assert.deepEqual(found['plain-sensitive 1'], ['high', '(1) Customer → API carries Card without encryption, across a zone boundary']);
+  assert.deepEqual(found['plain-sensitive 2'], ['medium', '(2) Orders → Orders replica carries Orders without encryption, between zones inside AWS (private)']);
+  assert.deepEqual(found['plain-sensitive 3'], ['medium', '(3) API → Orders carries Orders without encryption']);
+  assert.deepEqual(found['unauthenticated 4'], ['medium', '(4) Ops box → Orders replica isn’t authenticated, and crosses between zones inside AWS (private)'.replace('’', "'")]);
+  assert.deepEqual(found['unauthenticated 5'], ['high', "(5) Orders replica → Customer isn't authenticated, and crosses a zone boundary"]);
+  const r = tmReport(model);
+  assert.match(r, /4 cross a zone boundary, 2 of them only between zones inside another/);
+  const table = r.slice(r.indexOf('## Flows across zone boundaries'));
+  assert.match(table, /\| # \| From \| To \| Flow \| Protocol \| Sensitive data \| Stays inside \|/);
+  const rows = table.split('\n').filter((l) => /^\| \d/.test(l)).map((l) => l.split(' | ')[0].slice(2) + ':' + l.split(' | ').pop().replace(/ \|$/, ''));
+  assert.deepEqual(rows, ['1:—', '5:—', '2:AWS (private)', '4:AWS (private)']);
+});
+
+test('flat zones: every crossing is out of or into a zone, rated and reported as before (no Stays inside column)', () => {
+  const { model } = tmBuildModel(SRC);
+  assert.ok(model.flows.filter((f) => f.crosses).every((f) => f.crossing.within === null));
+  assert.doesNotMatch(tmReport(model), /Stays inside|of them only between/);
+});

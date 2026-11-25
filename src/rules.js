@@ -33,6 +33,8 @@ function tmFlowEncrypted(stated, protocol) {
 
 /**
  * What the rules find: [{ rule, risk, message, flow }] (flow: its number), most serious first.
+ * A crossing between zones that are both inside another (us-west-1 to us-west-2, inside AWS) is rated a step lower than
+ * one that goes out of or into a zone altogether, and says which zone it stays inside.
  *  - plain-sensitive: sensitive data on a flow that isn't encrypted
  *  - unknown-sensitive: sensitive data crossing a zone boundary, with no word on whether it is encrypted
  *  - unauthenticated: a flow marked authenticated = false that crosses into another zone or writes to a store
@@ -48,14 +50,17 @@ function tmFindings(model) {
     const b = byId.get(f.to);
     if (!a || !b) continue;
     const what = `(${f.n}) ${name(f.from)} → ${name(f.to)}`;
+    const inside = f.crossing && f.crossing.within ? zone(f.crossing.within) : null;
+    const across = inside ? `between zones inside ${inside.title}` : 'across a zone boundary';
+    const outward = f.crosses && !inside; // out of or into a zone altogether: the louder case
     const secret = f.data.filter((d) => tmIsSensitive(d.tags)).map((d) => d.text.replace(/\s*#\S+/g, '').trim());
     if (secret.length && f.encrypted === false) {
-      out.push({ rule: 'plain-sensitive', risk: f.crosses ? 'high' : 'medium', flow: f.n, message: `${what} carries ${secret.join(', ')} without encryption${f.crosses ? ', across a zone boundary' : ''}` });
+      out.push({ rule: 'plain-sensitive', risk: outward ? 'high' : 'medium', flow: f.n, message: `${what} carries ${secret.join(', ')} without encryption${f.crosses ? `, ${across}` : ''}` });
     } else if (secret.length && f.crosses && f.encrypted === null) {
-      out.push({ rule: 'unknown-sensitive', risk: 'low', flow: f.n, message: `${what} carries ${secret.join(', ')} across a zone boundary, but doesn't say whether it is encrypted: give it a protocol, or encrypted = true or false` });
+      out.push({ rule: 'unknown-sensitive', risk: 'low', flow: f.n, message: `${what} carries ${secret.join(', ')} ${across}, but doesn't say whether it is encrypted: give it a protocol, or encrypted = true or false` });
     }
     if (f.authenticated === false && (f.crosses || b.role === 'store')) {
-      out.push({ rule: 'unauthenticated', risk: f.crosses ? 'high' : 'medium', flow: f.n, message: `${what} isn't authenticated, and ${f.crosses ? 'crosses a zone boundary' : 'writes to a data store'}` });
+      out.push({ rule: 'unauthenticated', risk: outward ? 'high' : 'medium', flow: f.n, message: `${what} isn't authenticated, and ${f.crosses ? (inside ? `crosses ${across}` : 'crosses a zone boundary') : 'writes to a data store'}` });
     }
     const from = a.zone && zone(a.zone);
     if (b.role === 'store' && f.crosses && from && /untrusted/i.test(from.trust || '')) {

@@ -123,7 +123,9 @@ function tmBuildModel(src) {
       data,
       tags: [...new Set([...f.tags, ...tmTagsIn(label), ...tmTagsIn(description)])],
       threats: [],
-      crosses: !!(a && b && a.zone !== b.zone),
+      // crossing a zone boundary: crossing.within is the zone both ends are inside (between us-west-1 and us-west-2,
+      // inside AWS), or null when the flow goes out of or into a zone altogether
+      ...tmFlowCrossing(a, b, zoneById),
       sensitive: data.some((d) => tmIsSensitive(d.tags)),
       line: f.line,
     };
@@ -312,3 +314,15 @@ function tmBuildModel(src) {
 /** Lookups used by the views. */
 const tmElement = (model, id) => model.elements.find((e) => e.id === id);
 const tmZone = (model, id) => model.zones.find((z) => z.id === id);
+
+/** { crosses, crossing } for a flow from element a to element b: crossing is null, or { within: a zone ID or null }. */
+function tmFlowCrossing(a, b, zoneById) {
+  if (!a || !b || a.zone === b.zone) return { crosses: false, crossing: null };
+  const up = (id) => {
+    const out = [];
+    for (let z = zoneById.get(id), n = 0; z && n < 50; z = zoneById.get(z.parent), n++) out.push(z.id);
+    return out;
+  };
+  const there = up(b.zone);
+  return { crosses: true, crossing: { within: up(a.zone).find((z) => there.includes(z)) || null } };
+}

@@ -132,10 +132,12 @@ function tmReport(model, warnings = [], opts = {}) {
   if (opts.properties) L.unshift(...tmReportProperties(model, { date: opts.date, source: opts.source }), '');
   L.push(...tmExecutiveSummary(model, link, { date: opts.date }));
   const open = model.threats.filter((t) => t.status === 'open');
-  const crossing = model.flows.filter((f) => f.crosses);
+  // out of or into a zone first, then those that stay inside a zone (between the zones within it)
+  const crossing = model.flows.filter((f) => f.crosses).sort((x, y) => !!x.crossing.within - !!y.crossing.within || x.n - y.n);
+  const inner = crossing.filter((f) => f.crossing.within);
   const sensitive = crossing.filter((f) => f.sensitive);
   L.push('**In numbers**', '');
-  L.push(`- ${tmCount(model.elements.length, 'element')} in ${tmCount(model.zones.length, 'zone')}, with ${tmCount(model.flows.length, 'flow')} (${crossing.length} ${crossing.length === 1 ? 'crosses' : 'cross'} a zone boundary)`);
+  L.push(`- ${tmCount(model.elements.length, 'element')} in ${tmCount(model.zones.length, 'zone')}, with ${tmCount(model.flows.length, 'flow')} (${crossing.length} ${crossing.length === 1 ? 'crosses' : 'cross'} a zone boundary${inner.length ? `, ${inner.length} of them only between zones inside another` : ''})`);
   L.push(`- ${tmCount(model.threats.length, 'threat')}, ${open.length} open`);
   if (sensitive.length) L.push(`- ${tmCount(sensitive.length, 'flow')} ${sensitive.length === 1 ? 'carries' : 'carry'} sensitive data across a zone boundary`);
   if (model.controls.length) {
@@ -196,9 +198,10 @@ function tmReport(model, warnings = [], opts = {}) {
   // boundaries
   L.push('## Flows across zone boundaries', '');
   if (!crossing.length) L.push('No flow crosses from one zone to another.', '');
+  if (inner.length) L.push('Flows with a zone under *Stays inside* cross only between zones within it (such as two regions of one cloud account); the rest go out of or into a zone altogether, and are listed first.', '');
   L.push(
     ...tmTable(
-      ['#', 'From', 'To', 'Flow', 'Protocol', 'Sensitive data'],
+      ['#', 'From', 'To', 'Flow', 'Protocol', 'Sensitive data', ...(inner.length ? ['Stays inside'] : [])],
       crossing.map((f) => [
         f.n,
         `${name(f.from)} (${zoneName(el.get(f.from) && el.get(f.from).zone)})`,
@@ -206,6 +209,7 @@ function tmReport(model, warnings = [], opts = {}) {
         f.label,
         f.protocol || 'not stated',
         f.data.filter((d) => tmIsSensitive(d.tags)).map((d) => d.text).join(', '),
+        ...(inner.length ? [f.crossing.within ? zoneName(f.crossing.within) : '—'] : []),
       ])
     )
   );

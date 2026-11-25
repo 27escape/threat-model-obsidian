@@ -14,7 +14,8 @@ chat; update it when something here changes.
 - **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
   first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
   model without warnings, and icon names that survive Lucide's renames.
-- **0.3.0, ready to release** (`docs/release-notes/0.3.0.md`): editing from the diagram in Obsidian (the *Edit* switch and the Threat model editor in the right sidebar, with Add and Model menus, undo and redo, problems, *Show in text*, *Open in the web editor*); zones on the Structure view; a flow to a new element; deleting a box takes its flows. Release with `tools/release.sh 0.3.0` (push from WSL first).
+- **Not released yet:** nested zones in findings and the report: a crossing between zones that are both inside another (two regions of one AWS account) is rated a step lower than one going out of or into a zone, says which zone it stays inside, and is listed last in the report with a *Stays inside* column (`tmFlowCrossing` in model.js, rules.js, report.js).
+- **0.3.0 (released)** (`docs/release-notes/0.3.0.md`): editing from the diagram in Obsidian (the *Edit* switch and the Threat model editor in the right sidebar, with Add and Model menus, undo and redo, problems, *Show in text*, *Open in the web editor*); zones on the Structure view; a flow to a new element; deleting a box takes its flows.
 - **0.2.3 (released):** point and click for elements, zones, flows
   and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
   and errors that go to their line, a problems list, *Show in text*, the report shown in the page (print or save as
