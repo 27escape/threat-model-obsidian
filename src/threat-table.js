@@ -11,10 +11,7 @@ function tmViewThreats(model, view, opts = {}) {
     list = model.threats.filter(
       (t) => t.target.type === 'model' || t.targets.some((x) => (x.type === 'flow' && flows.has(x.n)) || (x.type === 'element' && ids.has(x.id)))
     );
-  } else if (view === 'structure') {
-    // zones aren't drawn in the Structure view; everything else shows on some box or arrow
-    list = model.threats.filter((t) => t.target.type === 'model' || t.targets.some((x) => x.type !== 'zone'));
-  } else list = model.threats;
+  } else list = tmScenarioModel(model, opts.scenario || '').threats; // the threats on what the view shows
   return tmSortThreats(list);
 }
 

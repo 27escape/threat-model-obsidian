@@ -87,6 +87,23 @@ for (const name of examples) {
       if (shots) await p.screenshot({ path: `${shots}/${name}-${view}${c ? `-${c}` : ''}.png`.replace(/\s+/g, '_') });
     }
   }
+  // one scenario at a time, on every view: the list comes before the view list, and starts on All scenarios
+  const scenarios = await p.$$eval('.tm-scenario-select option', (os) => os.map((o) => o.value));
+  if (scenarios.length) {
+    if ((await p.inputValue('.tm-scenario-select')) !== '') fail(`${name}: the scenario list does not start on All scenarios`);
+    if (!(await p.$eval('.tm-bar', (bar) => bar.querySelector('.tm-scenario-select').compareDocumentPosition(bar.querySelector('.tm-view-select')) & Node.DOCUMENT_POSITION_FOLLOWING))) fail(`${name}: the scenario list is not before the view list`);
+    for (const view of ['structure', 'dataflow', 'sequence']) {
+      await p.selectOption('.tm-view-select', view);
+      for (const sc of scenarios.slice(1)) {
+        await p.selectOption('.tm-scenario-select', sc);
+        await pause(250);
+        if (!(await p.$('.tw-view .mermaid svg'))) fail(`${name}, ${view}, scenario ${sc}: no diagram`);
+        else drawn++;
+      }
+    }
+    await p.selectOption('.tm-scenario-select', '');
+    await pause(250);
+  }
   const register = await p.$$('.tw-view .tm-table tr');
   const threats = (await p.inputValue('.tm-source-over')).match(/^\s*threat\b/gm);
   if (threats && !register.length) fail(`${name}: no threat register`);

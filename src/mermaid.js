@@ -23,6 +23,7 @@ function tmClip(s, n) {
 
 /** Short Mermaid IDs for every element and zone (model IDs may hold "-", which Mermaid reads as part of an arrow). */
 function tmMmIds(model) {
+  if (model.mmIds) return model.mmIds; // a model cut down for one scenario keeps the whole model's IDs (scenario-view.js)
   const ids = new Map();
   model.elements.forEach((e, i) => ids.set(e.id, `e${i + 1}`));
   model.zones.forEach((z, i) => ids.set(`zone:${z.id}`, `z${i + 1}`));

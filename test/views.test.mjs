@@ -271,7 +271,10 @@ test('the threats each view lists in its table', () => {
   `);
   const ids = (view, opts) => tmViewThreats(m, view, opts).map((t) => t.id);
   assert.deepEqual(ids('dataflow'), ['F1', 'A1', 'M1', 'F2', 'Z1']);
-  assert.deepEqual(ids('structure'), ['F1', 'A1', 'M1', 'F2']); // zones aren't in the Structure view
+  assert.deepEqual(ids('structure'), ['F1', 'A1', 'M1', 'F2', 'Z1']); // zones are drawn on the Structure view too
+  // one scenario on the Structure and Data flow views: what its flows touch, their zones, and the whole model's
+  assert.deepEqual(ids('dataflow', { scenario: 's' }), ['F1', 'A1', 'M1', 'Z1']);
+  assert.deepEqual(ids('structure', { scenario: 's' }), ['F1', 'A1', 'M1', 'Z1']);
   assert.deepEqual(ids('sequence', { scenario: 's' }), ['F1', 'A1', 'M1']); // only what the scenario touches
   assert.deepEqual(ids('sequence', { scenario: '' }), ['F1', 'A1', 'M1', 'F2']);
 });
@@ -511,4 +514,44 @@ test('the example a new model starts from (the Insert command, and New in the we
   const { model, errors, warnings } = tmBuildModel(TM_STARTER);
   assert.deepEqual([...errors, ...warnings], []);
   assert.deepEqual(model.findings, []);
+});
+
+test('one scenario on the Structure and Data flow views: only its flows, the elements at their ends (and around them), their zones', () => {
+  const { tmScenarioModel, tmDataflow, tmStructure, tmMmIds } = load(['tmScenarioModel', 'tmDataflow', 'tmStructure', 'tmMmIds']);
+  const m = model(`
+    zone net "Internet"
+    zone dc "Data centre"
+    person user "User" { zone = net }
+    system shop "Shop" {
+      zone = dc
+      container web "Web"
+      container api "API"
+      store db "DB"
+    }
+    external bank "Bank"
+    user -> web "Visits"
+    web -> api "Calls"
+    api -> db "Saves" { threat T1 "Leak" #I }
+    api -> bank "Pays"
+    scenario browse "Browsing" { user -> web  web -> api }
+    scenario pay "Paying" { api -> bank }
+  `);
+  const s = tmScenarioModel(m, 'browse');
+  assert.deepEqual(s.flows.map((f) => f.n), [1, 2]);
+  assert.deepEqual(s.elements.map((e) => e.id), ['user', 'shop', 'web', 'api']); // the system around them too
+  assert.deepEqual(s.elements.find((e) => e.id === 'shop').children, ['web', 'api']);
+  assert.deepEqual(s.zones.map((z) => z.id), ['net', 'dc']);
+  assert.deepEqual(s.threats, []);
+  // the diagrams keep the whole model's IDs (e2 is still the shop, z2 the data centre), so clicks still find things
+  assert.deepEqual(tmMmIds(s), tmMmIds(m));
+  const df = tmDataflow(s);
+  assert.doesNotMatch(df, /DB|Bank|Saves|Pays/);
+  assert.match(df, /e3 tmnone2@-->\|"\(2\) Calls"\| e4/);
+  const pay = tmDataflow(tmScenarioModel(m, 'pay'));
+  assert.doesNotMatch(pay, /subgraph z1/, 'the internet zone has nothing in it here');
+  assert.match(pay, /\(4\) Pays/);
+  assert.match(tmStructure(tmScenarioModel(m, 'browse'), 'container'), /subgraph e2 /);
+  // no scenario, or one that isn't there: the whole model
+  assert.deepEqual(tmScenarioModel(m, ''), m);
+  assert.deepEqual(tmScenarioModel(m, 'nope'), m);
 });

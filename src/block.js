@@ -1,4 +1,5 @@
-// What a threat block shows: a bar with a list of the three diagrams (then the C4 level list or the scenario list,
+// What a threat block shows: a bar with the scenario list (when the model has scenarios: one scenario's part of the
+// model, on every view) and a list of the three diagrams (then the C4 level list,
 // and the Threats and Compact switches) and, last, the Report button, then the chosen diagram, its threat register (the threats it
 // shows: threat-table.js) and its key (legend.js). Diagrams are Mermaid, drawn by Obsidian's own Markdown renderer.
 // The report is never shown in the block: its button saves it as a note and opens that in a new tab (report-note.js).
@@ -34,7 +35,8 @@ class TmBlock extends MarkdownRenderChild {
       key,
       view: [was.view, this.model.defaultView, s.defaultView].find((v) => TM_DIAGRAM_VIEWS.includes(v)) || 'structure',
       level: was.level || this.model.level || s.defaultLevel,
-      scenario: was.scenario !== undefined ? was.scenario : this.model.scenarioId || (this.model.scenarios[0] ? this.model.scenarios[0].id : ''),
+      // all scenarios ('') unless the model names one to open with (scenario = …), or it was chosen while this was open
+      scenario: was.scenario !== undefined ? was.scenario : this.model.scenarioId || '',
       overlay: was.overlay !== undefined ? was.overlay : true, // threats on the Structure view
       compact: was.compact !== undefined ? was.compact : false, // short labels, the detail in the table
       zones: was.zones !== undefined ? was.zones : true, // zones on the Structure view
@@ -43,6 +45,15 @@ class TmBlock extends MarkdownRenderChild {
 
     this.bar = el.createDiv({ cls: 'tm-bar' });
     if (this.model.title) this.bar.createSpan({ cls: 'tm-title', text: this.model.title });
+    // the scenario list first, for every view, when the model has scenarios
+    if (this.model.scenarios.length) {
+      const sel = this.bar.createEl('select', { cls: 'dropdown tm-select tm-scenario-select' });
+      sel.setAttr('aria-label', 'Scenario');
+      sel.createEl('option', { value: '', text: 'All scenarios' });
+      for (const sc of this.model.scenarios) sel.createEl('option', { value: sc.id, text: sc.title });
+      sel.value = this.state.scenario;
+      this.registerDomEvent(sel, 'change', () => this.choose({ scenario: sel.value }));
+    }
     this.viewSelect = this.bar.createEl('select', { cls: 'dropdown tm-select tm-view-select' });
     this.viewSelect.setAttr('aria-label', 'Diagram');
     for (const id of TM_DIAGRAM_VIEWS) this.viewSelect.createEl('option', { value: id, text: TM_VIEW_NAMES[id] });
@@ -105,8 +116,15 @@ class TmBlock extends MarkdownRenderChild {
     const { view, level, scenario, overlay, compact, zones } = this.state;
     if (view === 'sequence') return tmSequence(this.model, scenario, { compact });
     const defaultIcons = this.plugin.settings.defaultIcons;
-    if (view === 'dataflow') return tmDataflow(this.model, { compact, defaultIcons });
-    return tmStructure(this.model, tmLevelFor(this.model, level), { overlay, compact, zones, defaultIcons });
+    const shown = this.shownModel();
+    if (view === 'dataflow') return tmDataflow(shown, { compact, defaultIcons });
+    // the level is the whole model's, so choosing a scenario doesn't change it
+    return tmStructure(shown, tmLevelFor(this.model, level), { overlay, compact, zones, defaultIcons });
+  }
+
+  /** The model as the Structure and Data flow views draw it: one scenario's part of it, or all of it. */
+  shownModel() {
+    return this.state.view === 'sequence' ? this.model : tmScenarioModel(this.model, this.state.scenario);
   }
 
   draw() {
@@ -132,12 +150,12 @@ class TmBlock extends MarkdownRenderChild {
     inner.register(tmColourStrideSoon(body, links, true));
     tmDrawMermaid(this.text(), body, { app: this.plugin.app, sourcePath: this.sourcePath, component: inner });
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
-    tmFindingsInto(this.findings, this.model.findings);
-    tmLegendInto(this.legend, this.model, view, overlay, this.plugin.settings.defaultIcons !== false, zones);
+    tmFindingsInto(this.findings, this.shownModel().findings);
+    tmLegendInto(this.legend, this.shownModel(), view, overlay, this.plugin.settings.defaultIcons !== false, zones);
   }
 
   /**
-   * The C4 level list (Structure) or the scenario list (Sequence), then the Threats switch (Structure) and the
+   * The C4 level list (Structure; the scenario list is before the view list, for every view), then the Threats switch (Structure) and the
    * Compact switch. The level list offers only the levels that show something different, and isn't there when there
    * is only one (a model with nothing inside its systems).
    */
@@ -150,13 +168,6 @@ class TmBlock extends MarkdownRenderChild {
       for (const id of levels) sel.createEl('option', { value: id, text: TM_LEVEL_NAMES[id] });
       sel.value = tmLevelFor(this.model, this.state.level);
       sel.addEventListener('change', () => this.choose({ level: sel.value }));
-    } else if (this.state.view === 'sequence') {
-      const sel = this.extra.createEl('select', { cls: 'dropdown tm-select' });
-      sel.setAttr('aria-label', 'Scenario');
-      for (const s of this.model.scenarios) sel.createEl('option', { value: s.id, text: s.title });
-      sel.createEl('option', { value: '', text: 'Every flow, in order' });
-      sel.value = this.state.scenario;
-      sel.addEventListener('change', () => this.choose({ scenario: sel.value }));
     }
     const toggle = (name, key, tip) => {
       const b = this.extra.createEl('button', { cls: 'tm-btn tm-small tm-toggle', text: name });

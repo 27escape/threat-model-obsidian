@@ -83,7 +83,7 @@ Attributes at the top level describe the whole model and choose how it is shown:
 | `title` | Shown above the diagrams, and names the report |
 | `description` | Shown at the start of the report |
 | `default_view` | The view to open with: `"structure"`, `"sequence"` or `"dataflow"`. Otherwise the plugin's setting applies. |
-| `scenario` | The scenario the Sequence view opens with (its ID) |
+| `scenario` | The scenario the views open with (its ID); without it they open on all scenarios |
 | `level` | The C4 level the Structure view opens with: `"context"`, `"container"` or `"component"`. If the model has nothing that deep, its deepest level is used. |
 
 These describe the model as a document, for the report (its properties, and its *Scope and method* section):
@@ -546,7 +546,9 @@ scenario login "Customer signs in" {
 
 Each step finds the flow between those two elements and takes its label, data and threats. When there is more than one flow between them, add the label to choose. A step that matches no flow is still drawn, as a dashed arrow, with a warning.
 
-Without a scenario, the Sequence view shows every flow in the order written, as `.flow` did.
+Without a scenario (*All scenarios* in the scenario list), the Sequence view shows every flow in the order written, as `.flow` did.
+
+The scenario list, before the list of views, shows one scenario on the Structure and Data flow views too: only the flows its steps follow, the elements at their ends (with the systems and containers around them) and their zones, with the threat register and findings to match. A step that matches no flow isn't drawn there. Each view opens on *All scenarios* unless the model names one with `scenario = …`.
 
 ## Hashtags
 
