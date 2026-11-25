@@ -2,7 +2,8 @@ name: Release
 
 # Push a tag that matches the manifest version (for example 0.1.0, no "v") to build, test and
 # draft a GitHub release with main.js, manifest.json and styles.css, the only files Obsidian
-# installs. Each file gets a build attestation, so anyone can check it was built from this repo.
+# installs, and threat-modelling.html, the web app as one page to download and open (Obsidian
+# ignores it). Each file gets a build attestation, so anyone can check it was built from this repo.
 # Started by tools/release.sh, which then publishes the draft.
 on:
   push:
@@ -24,6 +25,11 @@ jobs:
           node-version: 22
       - name: Build
         run: node tools/build.mjs
+      - name: The web app page (Pele and the Lucide icons, at the versions it is tested with)
+        run: |
+          npm install --no-save pele@1.13.0 lucide-static@1.77.0
+          node tools/build-web.mjs
+          cp dist/web/index.html dist/threat-modelling.html
       - name: Plugin id, name and version
         id: m
         run: |
@@ -42,6 +48,7 @@ jobs:
             dist/${{ steps.m.outputs.id }}/main.js
             dist/${{ steps.m.outputs.id }}/manifest.json
             dist/${{ steps.m.outputs.id }}/styles.css
+            dist/threat-modelling.html
       - name: Draft the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,4 +57,4 @@ jobs:
           notes="docs/release-notes/${GITHUB_REF_NAME}.md"
           [ -f "$notes" ] || notes=/dev/null
           gh release create "${GITHUB_REF_NAME}" --draft --title "${{ steps.m.outputs.name }} ${GITHUB_REF_NAME}" --notes-file "$notes" \
-            "$d/main.js" "$d/manifest.json" "$d/styles.css"
+            "$d/main.js" "$d/manifest.json" "$d/styles.css" dist/threat-modelling.html

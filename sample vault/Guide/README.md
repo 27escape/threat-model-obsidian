@@ -113,6 +113,7 @@ The same models and diagrams in a web page, for trying the language without Obsi
 - **Help** (or `?`) has the keyboard shortcuts and the whole language reference. Every menu and dialog closes with Esc, a click outside it, or its ✕.
 - **The models menu** (the model's name, at the top left) works like a File menu: what you can do with the model shown (save a copy, rename, duplicate, download, copy as a code block, delete), then **My models**, your own, each with a name you choose, and **examples** to open and change. *New* starts one, *Open* reads a `.threat` file (or the first model in a Markdown note), and *Save a copy* keeps your changes to an example.
 - **To Obsidian:** *Download* saves the model as a `.threat` file to drop into your vault, and *Copy as code block* copies it as a `threat` code block to paste into a note.
+- **A copy of your own:** the page is one file, so you can keep it and use it offline. Download `threat-modelling.html` from the latest [release](https://github.com/27escape/threat-model-obsidian/releases/latest), or, in a clone of this repository, open `web/threat-modelling.html` (the page as of the last release; see [Building](#Building) to build it from the source). Opened from your computer, the examples and diagrams work, but some browsers won't let the page save your own models.
 - **Nothing leaves your browser.** The page is one self-contained file that makes no connections (its security policy forbids them) and works offline once loaded.
 - **Your models are kept in this browser only**, on this device. They don't follow you to another browser or computer, clearing the site's data deletes them, and a private window forgets them when it closes. *Download* is your backup. Use the page from its web address: opened as a file from your computer, some browsers won't let it save.
 
@@ -164,7 +165,7 @@ The diagrams take their colours from your theme, in light and dark mode: blues f
 
 ## Privacy
 
-Threat Modelling makes no network requests. It reads the text of the threat models it draws. It writes a file only when you ask: saving a report as a note (and making its Reports folder, if needed), or editing a `.threat` file.
+Threat Modelling makes no network requests. It reads the text of the threat models it draws. It writes a file only when you ask: saving a report as a note (and making its Reports folder, if needed), editing a `.threat` file, or saving a change in the Threat model editor (and then only inside that model's code block). *Open in the web editor* opens your browser with the model in the link's `#` part, which browsers never send to a website.
 
 ## Building
 
@@ -175,13 +176,16 @@ node tools/build.mjs        # dist/threat-model/{main.js,styles.css,manifest.jso
                             # and docs/language.md into the sample vault
 node --test test/*.test.mjs # unit tests
 node tools/check.mjs        # local-only rules, file sizes
+npm install --no-save pele@1.13.0 lucide-static@1.77.0 && node tools/build-web.mjs   # the web app: dist/web/index.html, one page to open in a browser
 npm install --no-save pele && node tools/render-check.mjs   # draws every sample diagram with Pele (optional)
 npm install --no-save pele playwright && node tools/dom-check.mjs   # colours them twice in a browser: the second pass must change nothing (optional)
 ```
 
 To try it, open the `sample vault` folder as a vault in Obsidian and turn on community plugins. Its *Guide* folder has this README and the language reference as notes. To use it in another vault, copy the three files from `dist/threat-model/` into that vault's `.obsidian/plugins/threat-model/` folder.
 
-`tools/setup-repo.sh` sets up git and GitHub once; `tools/release.sh X.Y.Z` releases a version.
+To try the web app from a clone without building anything, open `web/threat-modelling.html` in your browser: `tools/release.sh` rebuilds it for each release.
+
+`tools/setup-repo.sh` sets up git and GitHub once; `tools/release.sh X.Y.Z` releases a version, with the web app page attached to the release and refreshed in `web/`.
 
 ## Licence
 

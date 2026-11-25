@@ -14,12 +14,14 @@
 # (tools/setup-repo.sh sets that up).
 #   1. checks: a clean working tree, the release notes, the unit tests, the build and tools/check.mjs
 #   2. the version in the manifest and versions.json (only when VERSION differs)
-#   3. the sample vault's copy of the plugin, committed if it is tracked and changed
+#   3. the sample vault's copy of the plugin, committed if it is tracked and changed; the web app page,
+#      web/threat-modelling.html, built and committed if it changed (installs Pele and Lucide with npm if need be)
 #   4. main fast-forwarded to this branch (main must not have commits this branch lacks)
 #   5. an annotated tag VERSION on this commit
 #   6. push main, this branch and the tag to origin
 #   7. the GitHub release: pushing the tag starts GitHub Actions (.github/workflows/release.yml), which builds, tests,
-#      attests main.js, manifest.json and styles.css and drafts the release; this script then publishes that draft
+#      attests main.js, manifest.json, styles.css and the web app page (threat-modelling.html) and drafts the release;
+#      this script then publishes that draft
 #      with the GitHub CLI (gh) when it is installed and signed in, or says where to publish it on github.com
 # Safe to run again: steps already done (version set, tag on this commit, release made) are skipped.
 set -euo pipefail
@@ -144,6 +146,27 @@ if [ -d "$SAMPLE" ]; then
     else
       echo "   already up to date"
     fi
+  fi
+fi
+
+# ---- 3b. the web app page, kept in the repo for anyone who clones it (the release has it too, built by GitHub Actions)
+WEB="web/threat-modelling.html"
+say "Web app page"
+if [ ! -f node_modules/pele/dist/pele.global.js ] || [ ! -f node_modules/lucide-static/icon-nodes.json ]; then
+  echo "   installing Pele and Lucide, which the page is built with"
+  npm install --no-save pele@1.13.0 lucide-static@1.77.0 >"$TMP/$ID-release-npm.txt" 2>&1 || { tail -5 "$TMP/$ID-release-npm.txt"; fail "npm install failed (all output: $TMP/$ID-release-npm.txt)"; }
+fi
+node tools/build-web.mjs | tail -1 | sed 's/^/   /'
+if [ "$DRY" = 1 ]; then
+  echo "   would copy dist/web/index.html to $WEB and commit it if it changed"
+else
+  mkdir -p "$(dirname "$WEB")"
+  cp dist/web/index.html "$WEB"
+  if [ -n "$(git status --porcelain -- "$WEB")" ]; then
+    run git add -- "$WEB"
+    run git commit -q -m "Web app page: build $VERSION"
+  else
+    echo "   already up to date"
   fi
 fi
 
