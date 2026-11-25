@@ -92,7 +92,7 @@ for (const name of examples) {
   if (scenarios.length) {
     if ((await p.inputValue('.tm-scenario-select')) !== '') fail(`${name}: the scenario list does not start on All scenarios`);
     if (!(await p.$eval('.tm-bar', (bar) => bar.querySelector('.tm-scenario-select').compareDocumentPosition(bar.querySelector('.tm-view-select')) & Node.DOCUMENT_POSITION_FOLLOWING))) fail(`${name}: the scenario list is not before the view list`);
-    for (const view of ['structure', 'dataflow', 'sequence']) {
+    for (const view of ['structure', 'sequence', 'dataflow']) { // ending on Data flow, as the loop above does
       await p.selectOption('.tm-view-select', view);
       for (const sc of scenarios.slice(1)) {
         await p.selectOption('.tm-scenario-select', sc);
