@@ -24,7 +24,11 @@
 
 .tm-title {
   font-weight: var(--font-semibold);
-  margin-right: auto;
+  margin-bottom: var(--size-4-1);
+}
+/* in Live Preview, keep the title clear of Obsidian's "edit this block" button too */
+.markdown-source-view .tm-block .tm-title {
+  padding-right: var(--size-4-8);
 }
 
 .tm-group {
@@ -36,6 +40,25 @@
 
 .tm-extra:empty {
   display: none;
+}
+/* the switches and the menu (or Report) at the right of the bar, together even when the bar wraps */
+.tm-bar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  margin-left: auto;
+}
+.tm-switches {
+  display: flex;
+  gap: var(--size-4-1);
+}
+.tm-switches:empty {
+  display: none;
+}
+/* a long scenario name doesn't widen the bar: the list keeps to a sensible width (the whole name on hover) */
+.tm-select.tm-scenario-select {
+  max-width: 16em;
+  text-overflow: ellipsis;
 }
 
 .tm-btn {
@@ -72,15 +95,33 @@
   height: auto;
 }
 
-/* the zoom buttons above a diagram (diagram-zoom.js), at its right */
+/* the zoom buttons (diagram-zoom.js), floating in the diagram's top right corner: faint until the pointer is over
+   the diagram, always there on a touch screen */
+.tm-stage {
+  position: relative;
+}
 .tm-zoom {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
-  justify-content: flex-end;
   gap: 4px;
-  margin: 2px 0 4px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+.tm-stage:hover .tm-zoom,
+.tm-zoom:focus-within {
+  opacity: 1;
+}
+@media (hover: none) {
+  .tm-zoom {
+    opacity: 0.8;
+  }
 }
 .tm-zoom .tm-btn {
   padding: 2px 6px;
+  background: var(--background-primary);
 }
 .tm-zoom .svg-icon {
   width: 14px;

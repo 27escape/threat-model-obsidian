@@ -44,8 +44,9 @@ class TmBlock extends MarkdownRenderChild {
     };
     if (this.state.scenario && !this.model.scenarios.some((x) => x.id === this.state.scenario)) this.state.scenario = '';
 
+    // the title on a line of its own, so a long one never squeezes the controls below it
+    if (this.model.title) el.createDiv({ cls: 'tm-title', text: this.model.title });
     this.bar = el.createDiv({ cls: 'tm-bar' });
-    if (this.model.title) this.bar.createSpan({ cls: 'tm-title', text: this.model.title });
     // the scenario list first, for every view, when the model has scenarios
     if (this.model.scenarios.length) {
       const sel = this.bar.createEl('select', { cls: 'dropdown tm-select tm-scenario-select' });
@@ -53,25 +54,36 @@ class TmBlock extends MarkdownRenderChild {
       sel.createEl('option', { value: '', text: 'All scenarios' });
       for (const sc of this.model.scenarios) sel.createEl('option', { value: sc.id, text: sc.title });
       sel.value = this.state.scenario;
-      this.registerDomEvent(sel, 'change', () => this.choose({ scenario: sel.value }));
+      // the list keeps to a sensible width; the whole name of the one chosen shows on hover
+      const named = () => sel.setAttr('title', sel.selectedOptions[0] ? sel.selectedOptions[0].text : '');
+      named();
+      this.registerDomEvent(sel, 'change', () => {
+        named();
+        this.choose({ scenario: sel.value });
+      });
     }
     this.viewSelect = this.bar.createEl('select', { cls: 'dropdown tm-select tm-view-select' });
     this.viewSelect.setAttr('aria-label', 'Diagram');
     for (const id of TM_DIAGRAM_VIEWS) this.viewSelect.createEl('option', { value: id, text: TM_VIEW_NAMES[id] });
     this.registerDomEvent(this.viewSelect, 'change', () => this.choose({ view: this.viewSelect.value }));
     this.extra = this.bar.createDiv({ cls: 'tm-group tm-extra' });
+    // at the right of the bar, kept together when the bar wraps: the switches (drawExtra), then the menu or Report
+    const right = this.bar.createDiv({ cls: 'tm-bar-right' });
+    this.switches = right.createDiv({ cls: 'tm-switches' });
     if (this.plugin.startEditing) {
       // in Obsidian: one menu, last in the bar, for Edit, Report and getting the model out (block-menu.js)
-      this.editBtn = this.blockMenuButton(this.bar);
+      this.editBtn = this.blockMenuButton(right);
       this.setEditing(false);
       this.registerDomEvent(el, 'click', (e) => this.clicked(e));
     } else {
-      const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
+      const report = right.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
       report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
       this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
     }
-    this.zoomBar(el);
-    this.body = el.createDiv({ cls: 'tm-body' });
+    // the diagram, with the zoom buttons floating in its top right corner (diagram-zoom.js)
+    const stage = el.createDiv({ cls: 'tm-stage' });
+    this.zoomBar(stage);
+    this.body = stage.createDiv({ cls: 'tm-body' });
     this.table = el.createDiv({ cls: 'tm-table' });
     this.findings = el.createDiv({ cls: 'tm-findings-box' });
     this.legend = el.createDiv({ cls: 'tm-legend' });
@@ -173,8 +185,10 @@ class TmBlock extends MarkdownRenderChild {
       sel.value = tmLevelFor(this.model, this.state.level);
       sel.addEventListener('change', () => this.choose({ level: sel.value }));
     }
+    const switches = this.switches;
+    switches.empty();
     const toggle = (name, key, tip) => {
-      const b = this.extra.createEl('button', { cls: 'tm-btn tm-small tm-toggle', text: name });
+      const b = switches.createEl('button', { cls: 'tm-btn tm-small tm-toggle', text: name });
       b.toggleClass('is-active', !!this.state[key]);
       b.setAttr('aria-label', tip);
       b.setAttr('aria-pressed', String(!!this.state[key]));
