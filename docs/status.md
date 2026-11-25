@@ -78,19 +78,11 @@ Reviewed with Kevin on 25 November 2026, one by one. Held ideas want a conversat
 
 ### Held for the future
 
-1. **Icon suggestions in the editor's Icon field:** as you type, a list of matching Lucide icons, each drawn beside
-   its name, the technology's default icon first. Obsidian: an `AbstractInputSuggest` on the field (already used by
-   the settings), names from `getIconIds()`, drawn with `setIcon`. Web app: the same list from the bundled
-   `TW_LUCIDE` names (and old names), in a small dropdown under the field (a `<datalist>` can't show the icons). One
-   shared suggestion function, two small hosts; a few hours with tests.
-2. **The web app's export options in the plugin:** the diagram shown as SVG or PNG, and the threat register as CSV,
-   saved beside the note (commands, perhaps buttons). The web app has them all (`web/export.js`); in Obsidian today,
-   *Open in the web editor* gets there. No need yet; others may want it if they start using the plugin.
-3. **Filters on a busy diagram:** only threats of high risk and above, or of one STRIDE category. Scenarios, the
+1. **Filters on a busy diagram:** only threats of high risk and above, or of one STRIDE category. Scenarios, the
    footprint of one threat and the *Threats* switch cover much of it for now.
-4. **References on threats:** CWE or CAPEC numbers and ticket links (`refs = […]`), shown as links in the register,
+2. **References on threats:** CWE or CAPEC numbers and ticket links (`refs = […]`), shown as links in the register,
    the report and the CSV, with a field in the threat form. No requirement yet.
-5. **Data assets as things of their own:** each piece of data declared once (how confidential, how important its
+3. **Data assets as things of their own:** each piece of data declared once (how confidential, how important its
    integrity) and referred to from flows and stores, so the model knows where each travels; today sensitive data is
    marked with hashtags. A language change, one to two days. Kevin wants to understand how it affects things first:
    start with a short note showing a model both ways, and what changes in the diagrams, report and findings.
@@ -106,10 +98,16 @@ Reviewed with Kevin on 25 November 2026, one by one. Held ideas want a conversat
 
 ### Done
 
+- **Icon suggestions in the editor's Icon field** (after 0.3.1): both builds, the technology's icon first
+  (`edit/icon-suggest.js`; Obsidian's suggestion list in `obsidian-ui.js`, a small list in `web/icon-suggest.js`).
+- **The web app's export options in the plugin** (after 0.3.1): the block's **⋯** menu (`block-menu.js`) holds Edit,
+  Report, *Download as .threat file* (from a note) or *Copy as code block* (from a `.threat` file), *Copy a link to
+  share*, *Open in the web editor*, SVG and PNG pictures and the CSV register (`export-files.js`, shared with the web
+  app), downloads through the computer's save dialog (not on mobile).
 - **Trust zones in the Structure view:** 0.3.0 (nested-zone ratings in 0.3.1).
 - **A visual editor for threats, controls and elements:** the web app in 0.2.3, Obsidian in 0.3.0 (the Threat model
   editor). An out-of-scope flag on single elements wasn't built; a model's `scope` and `out_of_scope` describe it.
-- **CSV export of the threat register:** in the web app (the plugin's is idea 2 above).
+- **CSV export of the threat register:** in the web app, and in the plugin (below).
 - **An AI skill to draft models from a photo or a description:** `skills/threat-model/`, 0.2.2; scenarios and nested
   zones in 0.3.1.
 - **A standalone web app:** https://27escape.github.io/threat-model-obsidian/, since 0.2.2; also attached to each

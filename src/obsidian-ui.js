@@ -53,3 +53,40 @@ function twConfirm(title, message, action) {
 
 // the app, for twConfirm (whose callers in src/edit/ don't know it): set when the plugin loads
 let tmApp = null;
+
+// ---- icon suggestions in the Icon field (edit/icon-suggest.js): Obsidian's own suggestion list, each icon drawn
+
+class TmIconSuggest extends AbstractInputSuggest {
+  constructor(app, inputEl, technology) {
+    super(app, inputEl);
+    this.inputEl = inputEl;
+    this.technology = technology;
+  }
+
+  getSuggestions(query) {
+    return twIconChoices(query, this.technology(), twIconNames());
+  }
+
+  renderSuggestion(name, el) {
+    el.addClass('tm-icon-suggestion');
+    setIcon(el.createSpan({ cls: 'tm-icon-suggestion-icon' }), name);
+    el.createSpan({ text: name });
+  }
+
+  selectSuggestion(name) {
+    this.inputEl.value = name;
+    this.inputEl.dispatchEvent(new Event('input'));
+    this.close();
+  }
+}
+
+/** Every icon name Obsidian has (Lucide's, without the "lucide-" Obsidian puts before some). */
+let tmIconNameList = null;
+function twIconNames() {
+  if (!tmIconNameList) tmIconNameList = [...new Set(getIconIds().map((id) => id.replace(/^lucide-/, '')))].filter((n) => TM_ICON_NAME.test(n)).sort();
+  return tmIconNameList;
+}
+
+function twIconSuggest(input, technology) {
+  new TmIconSuggest(tmApp, input, technology);
+}

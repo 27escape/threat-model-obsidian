@@ -187,13 +187,6 @@ const MarkdownRenderer = {
 };
 
 // ---- The "app" the plugin's code is given: a vault whose only write is a download (the report)
-function twDownload(name, text, type = 'text/markdown') {
-  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
-  const a = document.body.createEl('a', { href: url, attr: { download: name } });
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 const twApp = {
   onReport: null, // set by the page: what to do with a report instead of saving it as a note

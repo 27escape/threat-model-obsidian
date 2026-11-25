@@ -66,3 +66,29 @@
   outline-offset: 4px;
   border-radius: var(--radius-s);
 }
+
+/* the menu at the end of a threat block's bar (block-menu.js), highlighted while the block is being edited */
+.tm-btn.tm-block-menu-btn {
+  margin-left: var(--size-4-2);
+  padding: 2px 8px;
+}
+.tm-block-menu-btn .svg-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+}
+.tm-btn.tm-block-menu-btn.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* icon suggestions in the Icon field (obsidian-ui.js): each icon beside its name */
+.tm-icon-suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+.tm-icon-suggestion-icon .svg-icon {
+  width: 16px;
+  height: 16px;
+}

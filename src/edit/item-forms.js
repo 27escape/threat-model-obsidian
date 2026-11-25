@@ -43,6 +43,8 @@ function twFormInto(el, spec, o) {
       : r.createEl('input', { type: f.type === 'date' ? 'date' : 'text', attr: { 'aria-label': f.label, placeholder: f.placeholder || '' } });
     input.value = f.type === 'lines' ? (f.value || []).join('\n') : f.value || '';
     if (f.required) input.required = true;
+    // suggestions as you type (icon names: edit/icon-suggest.js), where the build has them
+    if (f.suggest === 'icon' && typeof twIconSuggest === 'function') twIconSuggest(input, () => (get.technology ? get.technology() : ''));
     get[f.key] = f.type === 'lines' ? () => input.value.split('\n').map((x) => x.trim()).filter(Boolean) : () => input.value;
   }
   const problem = form.createDiv({ cls: 'tm-form-problem', attr: { role: 'alert' } });
@@ -78,7 +80,7 @@ function twElementSpec(raw, model) {
       options: [['', raw.zoneBlock ? `The zone it is written in (${raw.zoneBlock})` : raw.parent ? 'Its parent’s' : 'None'], ...model.zones.map((z) => [z.id, `${z.title}${z.trust ? ` (${z.trust})` : ''}`])],
     },
     { key: 'description', label: 'Description', type: 'textarea', value: twText(a.description) },
-    { key: 'icon', label: 'Icon', type: 'text', value: twText(a.icon), placeholder: 'A Lucide icon name, such as server; none for no icon', help: 'From lucide.dev/icons' },
+    { key: 'icon', label: 'Icon', type: 'text', value: twText(a.icon), placeholder: 'A Lucide icon name, such as server; none for no icon', help: 'Start typing to see matching icons (from lucide.dev/icons)', suggest: 'icon' },
     { key: 'link', label: 'Link', type: 'text', value: twText(a.link), placeholder: '[[A note]] or a web address' },
   ];
 }

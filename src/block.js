@@ -61,15 +61,15 @@ class TmBlock extends MarkdownRenderChild {
     this.registerDomEvent(this.viewSelect, 'change', () => this.choose({ view: this.viewSelect.value }));
     this.extra = this.bar.createDiv({ cls: 'tm-group tm-extra' });
     if (this.plugin.startEditing) {
-      this.editBtn = this.bar.createEl('button', { cls: 'tm-btn tm-toggle tm-edit-btn', text: 'Edit' });
-      this.editBtn.setAttr('aria-label', 'Change the model by clicking its diagram, in the Threat model editor (right sidebar)');
-      this.registerDomEvent(this.editBtn, 'click', () => (this.editing ? this.plugin.stopEditing(this) : this.plugin.startEditing(this)));
+      // in Obsidian: one menu, last in the bar, for Edit, Report and getting the model out (block-menu.js)
+      this.editBtn = this.blockMenuButton(this.bar);
       this.setEditing(false);
       this.registerDomEvent(el, 'click', (e) => this.clicked(e));
+    } else {
+      const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
+      report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
+      this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
     }
-    const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
-    report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
-    this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
     this.zoomBar(el);
     this.body = el.createDiv({ cls: 'tm-body' });
     this.table = el.createDiv({ cls: 'tm-table' });

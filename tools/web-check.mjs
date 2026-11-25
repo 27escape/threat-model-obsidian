@@ -169,6 +169,18 @@ await p.fill('.tw-panel .tw-panel-details textarea[aria-label=Description]', 'Ch
 await p.click('.tw-panel .tw-panel-details .tm-form button[type=submit]');
 await pause(300);
 if (!(await p.$eval('.tm-source-over', (t) => t.value)).includes('description = "Checked description"')) fail('a box\'s description was not written');
+// the Icon field suggests icons as you type: drawn beside their names, chosen with the keys
+await p.click('.tw-panel .tw-panel-details input[aria-label=Icon]');
+await p.fill('.tw-panel .tw-panel-details input[aria-label=Icon]', 'data');
+await pause(150);
+const offered = await p.$$eval('.tw-panel .tw-suggest:not(.tw-hidden) .tw-suggest-item', (els) => els.map((e) => [e.textContent, !!e.querySelector('svg')]));
+if (!offered.length || !offered.every(([name, drawn]) => name.includes('data') && drawn)) fail(`the Icon field does not suggest icons (${JSON.stringify(offered.slice(0, 3))})`);
+await p.keyboard.press('ArrowDown');
+await p.keyboard.press('Enter');
+if ((await p.inputValue('.tw-panel .tw-panel-details input[aria-label=Icon]')) !== offered[0][0]) fail('choosing a suggested icon does not fill the field');
+if (await p.isVisible('.tw-panel .tw-suggest')) fail('the suggestions stay open after choosing');
+await p.fill('.tw-panel .tw-panel-details input[aria-label=Icon]', '');
+await p.keyboard.press('Escape');
 // an arrow opens its flows
 await p.selectOption('.tm-view-select', 'dataflow');
 await pause();
@@ -472,5 +484,5 @@ if ((await p.$$('.tw-menu-panel .tw-group:nth-child(3) .tw-item')).length) fail(
 
 await browser.close();
 for (const x of problems) console.log(`problem: ${x}`);
-console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, a flow to a new element, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, zoom, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
+console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, icon suggestions, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, a flow to a new element, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, zoom, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
 process.exit(problems.length ? 1 : 0);

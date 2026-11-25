@@ -205,3 +205,40 @@
 .tw-version-when {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- icon suggestions under the Icon field (web/icon-suggest.js) */
+.tw-suggest-wrap {
+  position: relative;
+}
+.tw-suggest {
+  position: absolute;
+  z-index: 7;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 2px;
+  padding: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+.tw-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.tw-suggest-item:hover,
+.tw-suggest-item.is-selected {
+  background: var(--background-modifier-hover);
+}
+.tw-suggest-item .svg-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
