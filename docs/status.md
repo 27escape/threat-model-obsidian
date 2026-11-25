@@ -100,7 +100,7 @@ Reviewed with Kevin on 25 November 2026, one by one. Held ideas want a conversat
 
 - **Icon suggestions in the editor's Icon field** (after 0.3.1): both builds, the technology's icon first
   (`edit/icon-suggest.js`; Obsidian's suggestion list in `obsidian-ui.js`, a small list in `web/icon-suggest.js`).
-- **The web app's export options in the plugin** (after 0.3.1): the block's **⋯** menu (`block-menu.js`) holds Edit,
+- **The web app's export options in the plugin** (after 0.3.1): the block's **Tools** menu (`block-menu.js`) holds Edit,
   Report, *Download as .threat file* (from a note) or *Copy as code block* (from a `.threat` file), *Copy a link to
   share*, *Open in the web editor*, SVG and PNG pictures and the CSV register (`export-files.js`, shared with the web
   app), downloads through the computer's save dialog (not on mobile).

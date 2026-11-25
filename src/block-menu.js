@@ -8,7 +8,8 @@ Object.assign(TmBlock.prototype, {
   /** The menu's button, in `bar`: it stays highlighted while the block is being edited. Returns it. */
   blockMenuButton(bar) {
     const b = bar.createEl('button', { cls: 'tm-btn tm-block-menu-btn' });
-    setIcon(b.createSpan({ cls: 'tm-block-menu-icon' }), 'ellipsis');
+    b.createSpan({ text: 'Tools' });
+    setIcon(b.createSpan({ cls: 'tm-block-menu-icon' }), 'chevron-down');
     b.setAttr('aria-label', 'Edit, report, and save or share this model');
     this.registerDomEvent(b, 'click', (e) => this.blockMenu(e, b));
     return b;
