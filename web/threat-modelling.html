@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="description" content="Write a threat model as text and see it as C4, sequence and data-flow diagrams, with STRIDE threats coloured by risk. Everything stays in your browser.">
 <title>Threat Modelling</title>
-<!-- Threat Modelling 0.3.1, web app. Built from the plugin's source by tools/build-web.mjs. Pele 1.13.0 (MIT), Lucide (ISC). -->
+<!-- Threat Modelling 0.3.2, web app. Built from the plugin's source by tools/build-web.mjs. Pele 1.13.0 (MIT), Lucide (ISC). -->
 <style>
 /* @src src/web/theme.css */
 /* The web app's stand-in for Obsidian's theme: the CSS variables the plugin's styles use, with values close to
@@ -199,7 +199,11 @@ button.is-active {
 
 .tm-title {
   font-weight: var(--font-semibold);
-  margin-right: auto;
+  margin-bottom: var(--size-4-1);
+}
+/* in Live Preview, keep the title clear of Obsidian's "edit this block" button too */
+.markdown-source-view .tm-block .tm-title {
+  padding-right: var(--size-4-8);
 }
 
 .tm-group {
@@ -211,6 +215,25 @@ button.is-active {
 
 .tm-extra:empty {
   display: none;
+}
+/* the switches and the menu (or Report) at the right of the bar, together even when the bar wraps */
+.tm-bar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  margin-left: auto;
+}
+.tm-switches {
+  display: flex;
+  gap: var(--size-4-1);
+}
+.tm-switches:empty {
+  display: none;
+}
+/* a long scenario name doesn't widen the bar: the list keeps to a sensible width (the whole name on hover) */
+.tm-select.tm-scenario-select {
+  max-width: 16em;
+  text-overflow: ellipsis;
 }
 
 .tm-btn {
@@ -247,15 +270,33 @@ button.is-active {
   height: auto;
 }
 
-/* the zoom buttons above a diagram (diagram-zoom.js), at its right */
+/* the zoom buttons (diagram-zoom.js), floating in the diagram's top right corner: faint until the pointer is over
+   the diagram, always there on a touch screen */
+.tm-stage {
+  position: relative;
+}
 .tm-zoom {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
-  justify-content: flex-end;
   gap: 4px;
-  margin: 2px 0 4px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+.tm-stage:hover .tm-zoom,
+.tm-zoom:focus-within {
+  opacity: 1;
+}
+@media (hover: none) {
+  .tm-zoom {
+    opacity: 0.8;
+  }
 }
 .tm-zoom .tm-btn {
   padding: 2px 6px;
+  background: var(--background-primary);
 }
 .tm-zoom .svg-icon {
   width: 14px;
@@ -1400,6 +1441,43 @@ button .svg-icon + span {
 .tw-version-when {
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- icon suggestions under the Icon field (web/icon-suggest.js) */
+.tw-suggest-wrap {
+  position: relative;
+}
+.tw-suggest {
+  position: absolute;
+  z-index: 7;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 2px;
+  padding: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+.tw-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.tw-suggest-item:hover,
+.tw-suggest-item.is-selected {
+  background: var(--background-modifier-hover);
+}
+.tw-suggest-item .svg-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
 /* @src src/web/docs.css */
 /* The documents the web app shows in a dialog, the report and the language reference (markdown.js), and printing
    the report. */
@@ -1932,13 +2010,6 @@ const MarkdownRenderer = {
 };
 
 // ---- The "app" the plugin's code is given: a vault whose only write is a download (the report)
-function twDownload(name, text, type = 'text/markdown') {
-  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
-  const a = document.body.createEl('a', { href: url, attr: { download: name } });
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 const twApp = {
   onReport: null, // set by the page: what to do with a report instead of saving it as a note
@@ -5350,8 +5421,9 @@ class TmBlock extends MarkdownRenderChild {
     };
     if (this.state.scenario && !this.model.scenarios.some((x) => x.id === this.state.scenario)) this.state.scenario = '';
 
+    // the title on a line of its own, so a long one never squeezes the controls below it
+    if (this.model.title) el.createDiv({ cls: 'tm-title', text: this.model.title });
     this.bar = el.createDiv({ cls: 'tm-bar' });
-    if (this.model.title) this.bar.createSpan({ cls: 'tm-title', text: this.model.title });
     // the scenario list first, for every view, when the model has scenarios
     if (this.model.scenarios.length) {
       const sel = this.bar.createEl('select', { cls: 'dropdown tm-select tm-scenario-select' });
@@ -5359,25 +5431,36 @@ class TmBlock extends MarkdownRenderChild {
       sel.createEl('option', { value: '', text: 'All scenarios' });
       for (const sc of this.model.scenarios) sel.createEl('option', { value: sc.id, text: sc.title });
       sel.value = this.state.scenario;
-      this.registerDomEvent(sel, 'change', () => this.choose({ scenario: sel.value }));
+      // the list keeps to a sensible width; the whole name of the one chosen shows on hover
+      const named = () => sel.setAttr('title', sel.selectedOptions[0] ? sel.selectedOptions[0].text : '');
+      named();
+      this.registerDomEvent(sel, 'change', () => {
+        named();
+        this.choose({ scenario: sel.value });
+      });
     }
     this.viewSelect = this.bar.createEl('select', { cls: 'dropdown tm-select tm-view-select' });
     this.viewSelect.setAttr('aria-label', 'Diagram');
     for (const id of TM_DIAGRAM_VIEWS) this.viewSelect.createEl('option', { value: id, text: TM_VIEW_NAMES[id] });
     this.registerDomEvent(this.viewSelect, 'change', () => this.choose({ view: this.viewSelect.value }));
     this.extra = this.bar.createDiv({ cls: 'tm-group tm-extra' });
+    // at the right of the bar, kept together when the bar wraps: the switches (drawExtra), then the menu or Report
+    const right = this.bar.createDiv({ cls: 'tm-bar-right' });
+    this.switches = right.createDiv({ cls: 'tm-switches' });
     if (this.plugin.startEditing) {
-      this.editBtn = this.bar.createEl('button', { cls: 'tm-btn tm-toggle tm-edit-btn', text: 'Edit' });
-      this.editBtn.setAttr('aria-label', 'Change the model by clicking its diagram, in the Threat model editor (right sidebar)');
-      this.registerDomEvent(this.editBtn, 'click', () => (this.editing ? this.plugin.stopEditing(this) : this.plugin.startEditing(this)));
+      // in Obsidian: one menu, last in the bar, for Edit, Report and getting the model out (block-menu.js)
+      this.editBtn = this.blockMenuButton(right);
       this.setEditing(false);
       this.registerDomEvent(el, 'click', (e) => this.clicked(e));
+    } else {
+      const report = right.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
+      report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
+      this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
     }
-    const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
-    report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
-    this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
-    this.zoomBar(el);
-    this.body = el.createDiv({ cls: 'tm-body' });
+    // the diagram, with the zoom buttons floating in its top right corner (diagram-zoom.js)
+    const stage = el.createDiv({ cls: 'tm-stage' });
+    this.zoomBar(stage);
+    this.body = stage.createDiv({ cls: 'tm-body' });
     this.table = el.createDiv({ cls: 'tm-table' });
     this.findings = el.createDiv({ cls: 'tm-findings-box' });
     this.legend = el.createDiv({ cls: 'tm-legend' });
@@ -5479,8 +5562,10 @@ class TmBlock extends MarkdownRenderChild {
       sel.value = tmLevelFor(this.model, this.state.level);
       sel.addEventListener('change', () => this.choose({ level: sel.value }));
     }
+    const switches = this.switches;
+    switches.empty();
     const toggle = (name, key, tip) => {
-      const b = this.extra.createEl('button', { cls: 'tm-btn tm-small tm-toggle', text: name });
+      const b = switches.createEl('button', { cls: 'tm-btn tm-small tm-toggle', text: name });
       b.toggleClass('is-active', !!this.state[key]);
       b.setAttr('aria-label', tip);
       b.setAttr('aria-pressed', String(!!this.state[key]));
@@ -6882,29 +6967,15 @@ async function tmReadShareLink(hash) {
   if (typeof json.t !== 'string') throw new Error('no model in the link');
   return { name: String(json.n || 'model'), text: json.t };
 }
-/* @src src/web/export.js */
-// Getting a model out of the page, without anything leaving the browser: a link with the model in it, pictures of
-// the diagram shown (SVG, or PNG), and the threat register as CSV for a spreadsheet or a ticket system.
+/* @src src/export-files.js */
+// Files made from a model, for both builds: the diagram shown as SVG (its look written in, so it stands alone) or PNG,
+// the threat register as CSV for a spreadsheet or a ticket system, and the download that hands a file to the
+// browser (in Obsidian on a computer: its save dialog). The web app's menu (web/app-models.js) and the plugin's
+// block menu (block-menu.js) use them. Nothing leaves the computer.
 
-// ---- links: the model compressed into the address, after "#" (which browsers never send to a website)
-
-/** The page's address with the model (and a name for it) in it (share-link.js). */
-const twShareLink = (text, name) => tmShareLink(text, name, location.href);
-
-/** The model in the page's address, if it was opened from a link: { name, text }, or null. */
-async function twSharedFromAddress() {
-  try {
-    const shared = await tmReadShareLink(location.hash);
-    return shared && { name: `Shared: ${shared.name.slice(0, TW_NAME_MAX - 8)}`, text: shared.text };
-  } catch {
-    new Notice('That link’s model couldn’t be read: it may have been cut short.');
-    return null;
-  }
-}
-
-/** Take the model out of the address once something else is shown, so a reload doesn't bring it back. */
-function twClearShared() {
-  if (location.hash.startsWith(`#${TM_SHARE_KEY}=`)) history.replaceState(null, '', location.href.replace(/#.*$/, ''));
+/** Hand `text` to the browser as a file called `name`. */
+function twDownload(name, text, type = 'text/markdown') {
+  twDownloadBlob(name, new Blob([text], { type: `${type};charset=utf-8` }));
 }
 
 // ---- pictures: the diagram as it is drawn, its look written into it so it stands alone
@@ -6925,9 +6996,10 @@ function twDiagramSvg(view) {
     b[i].removeAttribute('class');
   });
   for (const s of copy.querySelectorAll('style, title')) s.remove();
+  // its own size (as drawn, before any zoom: diagram-zoom.js), or as shown if it has none
   const box = live.getBoundingClientRect();
-  const w = Math.ceil(box.width);
-  const h = Math.ceil(box.height);
+  const w = Math.ceil(parseFloat(live.getAttribute('width')) || box.width);
+  const h = Math.ceil(parseFloat(live.getAttribute('height')) || box.height);
   copy.setAttribute('width', String(w));
   copy.setAttribute('height', String(h));
   copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -6996,6 +7068,30 @@ function twRegisterCsv(model) {
     t.description,
   ]);
   return [head, ...rows].map((r) => r.map(twCsvCell).join(',')).join('\r\n') + '\r\n';
+}
+/* @src src/web/export.js */
+// Getting a model out of the page, without anything leaving the browser: a link with the model in it (share-link.js).
+// Pictures of the diagram and the threat register as CSV are in export-files.js, which the plugin shares.
+
+// ---- links: the model compressed into the address, after "#" (which browsers never send to a website)
+
+/** The page's address with the model (and a name for it) in it (share-link.js). */
+const twShareLink = (text, name) => tmShareLink(text, name, location.href);
+
+/** The model in the page's address, if it was opened from a link: { name, text }, or null. */
+async function twSharedFromAddress() {
+  try {
+    const shared = await tmReadShareLink(location.hash);
+    return shared && { name: `Shared: ${shared.name.slice(0, TW_NAME_MAX - 8)}`, text: shared.text };
+  } catch {
+    new Notice('That link’s model couldn’t be read: it may have been cut short.');
+    return null;
+  }
+}
+
+/** Take the model out of the address once something else is shown, so a reload doesn't bring it back. */
+function twClearShared() {
+  if (location.hash.startsWith(`#${TM_SHARE_KEY}=`)) history.replaceState(null, '', location.href.replace(/#.*$/, ''));
 }
 /* @src src/web/report-view.js */
 // The report in the page: the plugin's own report (report.js), which in Obsidian becomes a note, shown here as a
@@ -7604,6 +7700,8 @@ function twFormInto(el, spec, o) {
       : r.createEl('input', { type: f.type === 'date' ? 'date' : 'text', attr: { 'aria-label': f.label, placeholder: f.placeholder || '' } });
     input.value = f.type === 'lines' ? (f.value || []).join('\n') : f.value || '';
     if (f.required) input.required = true;
+    // suggestions as you type (icon names: edit/icon-suggest.js), where the build has them
+    if (f.suggest === 'icon' && typeof twIconSuggest === 'function') twIconSuggest(input, () => (get.technology ? get.technology() : ''));
     get[f.key] = f.type === 'lines' ? () => input.value.split('\n').map((x) => x.trim()).filter(Boolean) : () => input.value;
   }
   const problem = form.createDiv({ cls: 'tm-form-problem', attr: { role: 'alert' } });
@@ -7639,7 +7737,7 @@ function twElementSpec(raw, model) {
       options: [['', raw.zoneBlock ? `The zone it is written in (${raw.zoneBlock})` : raw.parent ? 'Its parent’s' : 'None'], ...model.zones.map((z) => [z.id, `${z.title}${z.trust ? ` (${z.trust})` : ''}`])],
     },
     { key: 'description', label: 'Description', type: 'textarea', value: twText(a.description) },
-    { key: 'icon', label: 'Icon', type: 'text', value: twText(a.icon), placeholder: 'A Lucide icon name, such as server; none for no icon', help: 'From lucide.dev/icons' },
+    { key: 'icon', label: 'Icon', type: 'text', value: twText(a.icon), placeholder: 'A Lucide icon name, such as server; none for no icon', help: 'Start typing to see matching icons (from lucide.dev/icons)', suggest: 'icon' },
     { key: 'link', label: 'Link', type: 'text', value: twText(a.link), placeholder: '[[A note]] or a web address' },
   ];
 }
@@ -7678,6 +7776,92 @@ function twControlSpec(raw, model) {
     { key: 'due', label: 'Due', type: 'date', value: twText(a.due) },
     { key: 'description', label: 'Description', type: 'textarea', value: twText(a.description) },
   ];
+}
+/* @src src/edit/icon-suggest.js */
+// Icon names to suggest as the user types in the Icon field (item-forms.js), for both builds: the one the plugin would
+// choose for the technology first, then names that start with what is typed, then names that contain every word of
+// it (so "lock key" finds key-round and lock-keyhole). Each build lists its icons (twIconNames) and shows the list (twIconSuggest):
+// obsidian-ui.js with Obsidian's own suggestion list, web/icon-suggest.js in the page.
+
+const TW_ICON_SUGGESTIONS = 40;
+
+/** The names to offer for `query`, given the element's technology and every icon name the build has. */
+function twIconChoices(query, technology, names) {
+  const q = String(query || '').trim().toLowerCase();
+  const known = new Set(names);
+  const out = [];
+  const add = (n) => out.length < TW_ICON_SUGGESTIONS && n && known.has(n) && !out.includes(n) && out.push(n);
+  const tech = tmTechIcon(technology || '');
+  if (tech && (!q || tech.includes(q))) add(tech);
+  const words = q.split(/[\s-]+/).filter(Boolean);
+  for (const n of names) if (n.startsWith(q)) add(n);
+  for (const n of names) if (words.every((w) => n.includes(w))) add(n);
+  return out;
+}
+/* @src src/web/icon-suggest.js */
+// Icon suggestions in the Icon field for the web app (the plugin uses Obsidian's suggestion list: obsidian-ui.js): a
+// small list under the field as you type, each icon drawn beside its name (edit/icon-suggest.js chooses them). Up and
+// Down move through it, Enter or a click chooses, Escape or leaving the field closes it.
+
+/** Every icon name the page has: Lucide's, and the old names it still answers to. */
+function twIconNames() {
+  return (twIconNames.all ||= [...Object.keys(TW_LUCIDE), ...Object.keys(TW_LUCIDE_ALIASES)].sort());
+}
+
+function twIconSuggest(input, technology) {
+  const wrap = input.parentElement;
+  wrap.addClass('tw-suggest-wrap');
+  const list = wrap.createDiv({ cls: 'tw-suggest tw-hidden', attr: { role: 'listbox' } });
+  input.setAttr('autocomplete', 'off');
+  let names = [];
+  let at = -1;
+  const close = () => {
+    list.addClass('tw-hidden');
+    at = -1;
+  };
+  const mark = () => [...list.children].forEach((c, i) => c.toggleClass('is-selected', i === at));
+  const choose = (name) => {
+    input.value = name;
+    input.dispatchEvent(new Event('input'));
+    close();
+  };
+  const show = () => {
+    names = twIconChoices(input.value, technology(), twIconNames());
+    list.empty();
+    at = -1;
+    if (!names.length) return close();
+    for (const name of names) {
+      const item = list.createDiv({ cls: 'tw-suggest-item', attr: { role: 'option' } });
+      const svg = getIcon(name);
+      if (svg) item.appendChild(svg);
+      item.createSpan({ text: name });
+      // pointerdown, so the choice is made before the field loses focus and closes the list
+      item.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        choose(name);
+      });
+    }
+    list.removeClass('tw-hidden');
+  };
+  input.addEventListener('input', (e) => e.isTrusted !== false && document.activeElement === input && show());
+  input.addEventListener('focus', show);
+  input.addEventListener('blur', close);
+  input.addEventListener('keydown', (e) => {
+    if (list.hasClass('tw-hidden')) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      at = (at + (e.key === 'ArrowDown' ? 1 : -1) + names.length) % names.length;
+      mark();
+      list.children[at].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && at >= 0) {
+      e.preventDefault();
+      choose(names[at]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation(); // the list, not the panel
+      close();
+    }
+  });
 }
 /* @src src/edit/edit-panel.js */
 // Point and click: the panel that edits a model, shared by the web app and (later) the plugin. Click a box, a zone or
