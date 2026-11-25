@@ -72,6 +72,35 @@
   height: auto;
 }
 
+/* the zoom buttons above a diagram (diagram-zoom.js), at its right */
+.tm-zoom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+.tm-zoom .tm-btn {
+  padding: 2px 6px;
+}
+.tm-zoom .svg-icon {
+  width: 14px;
+  height: 14px;
+}
+/* a zoomed diagram fills the box it is given; the box can be wider than the block, which then scrolls */
+.tm-body .mermaid.tm-zoomed {
+  max-width: none;
+  margin: 0 auto;
+}
+.tm-body .mermaid.tm-zoomed svg {
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+}
+.tm-zoom-label {
+  min-width: 3.6em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Report opens a note in a new tab rather than switching the view: last in the bar, set apart, with an arrow */
 .tm-btn.tm-report-btn {
   margin-left: var(--size-4-2);

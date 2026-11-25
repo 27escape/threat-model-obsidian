@@ -172,6 +172,7 @@ const MarkdownRenderer = {
     const host = el.createDiv({ cls: 'mermaid' });
     try {
       const mounted = pele.mount(host, m[1], {
+        controls: false, // the block has its own zoom buttons (diagram-zoom.js)
         onError: (e) => {
           host.empty();
           host.createDiv({ cls: 'tm-errors', text: `The diagram couldn't be drawn: ${e && e.message ? e.message : e}` });

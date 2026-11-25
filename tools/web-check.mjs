@@ -391,6 +391,34 @@ await pause(150);
 if (await p.$('dialog[open]')) await p.click('dialog button.mod-warning');
 await pause();
 
+// ---- zoom: Fit makes the diagram fit, + and − change it, the % goes back to its own size; Pele's own buttons are off
+{
+  const width = () => p.$eval('.tw-view .mermaid svg', (svg) => svg.getBoundingClientRect().width);
+  const label = () => p.textContent('.tm-zoom-label');
+  if (await p.$('.tw-view .pele-zoom')) fail('Pele’s own zoom buttons show beside the block’s');
+  const own = await width();
+  await p.click('.tm-zoom-btn[aria-label="Zoom in"]');
+  await pause(300);
+  const bigger = await width();
+  if (!(bigger > own * 1.1)) fail(`Zoom in did not make the diagram bigger (${own} → ${bigger})`);
+  await p.click('.tm-zoom-btn[aria-label="Zoom out"]');
+  await p.click('.tm-zoom-btn[aria-label="Zoom out"]');
+  await pause(300);
+  if (!((await width()) < bigger)) fail('Zoom out did not make the diagram smaller');
+  await p.click('.tm-zoom-btn[aria-label="Fit the whole diagram in view"]');
+  await pause(300);
+  const fit = await p.$eval('.tw-view .mermaid svg', (svg) => {
+    const r = svg.getBoundingClientRect();
+    const v = svg.closest('.tw-view').getBoundingClientRect();
+    return r.width <= v.width + 1 && r.height <= v.height;
+  });
+  if (!fit) fail('Fit does not fit the diagram in view');
+  await p.click('.tm-zoom-label');
+  await pause(300);
+  if (Math.abs((await width()) - own) > 2) fail('the % does not go back to the diagram as first drawn');
+  if (!/^\d+%$/.test(await label())) fail('the zoom is not shown as a %');
+}
+
 // ---- hiding the text gives the diagrams the whole width, and is remembered
 const width = () => p.$eval('.tw-view', (el) => el.getBoundingClientRect().width);
 const before = await width();
@@ -444,5 +472,5 @@ if ((await p.$$('.tw-menu-panel .tw-group:nth-child(3) .tw-item')).length) fail(
 
 await browser.close();
 for (const x of problems) console.log(`problem: ${x}`);
-console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, a flow to a new element, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
+console.log(problems.length ? `${problems.length} problem(s)` : `web app checked: the models menu, ${examples.length} examples, ${drawn} diagrams, every threat's form, a threat added, changed and deleted, a box's form, an arrow, zones on the Structure view, a control and a zone added and deleted, a threat rated by CVSS, an element, flow and scenario added, a flow to a new element, undo and redo, show in text, problems, pictures, the register, a link, the report, every overlay closing three ways, help, zoom, hiding the text, and a model saved, reloaded, renamed, downloaded and deleted`);
 process.exit(problems.length ? 1 : 0);

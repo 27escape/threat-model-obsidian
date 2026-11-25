@@ -40,6 +40,7 @@ class TmBlock extends MarkdownRenderChild {
       overlay: was.overlay !== undefined ? was.overlay : true, // threats on the Structure view
       compact: was.compact !== undefined ? was.compact : false, // short labels, the detail in the table
       zones: was.zones !== undefined ? was.zones : true, // zones on the Structure view
+      zoom: was.zoom !== undefined ? was.zoom : null, // the diagram's zoom: null (as drawn), 'fit' or a number (diagram-zoom.js)
     };
     if (this.state.scenario && !this.model.scenarios.some((x) => x.id === this.state.scenario)) this.state.scenario = '';
 
@@ -69,6 +70,7 @@ class TmBlock extends MarkdownRenderChild {
     const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
     report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
     this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
+    this.zoomBar(el);
     this.body = el.createDiv({ cls: 'tm-body' });
     this.table = el.createDiv({ cls: 'tm-table' });
     this.findings = el.createDiv({ cls: 'tm-findings-box' });
@@ -106,8 +108,9 @@ class TmBlock extends MarkdownRenderChild {
 
   choose(change) {
     Object.assign(this.state, change);
-    const { view, level, scenario, overlay, compact, zones } = this.state;
-    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact, zones });
+    const { view, level, scenario, overlay, compact, zones, zoom } = this.state;
+    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact, zones, zoom });
+    if (Object.keys(change).length === 1 && 'zoom' in change) return this.applyZoomNow(); // the same picture, sized again
     this.draw();
   }
 
@@ -148,6 +151,7 @@ class TmBlock extends MarkdownRenderChild {
       clear: () => tmShowFootprint(body, null),
     };
     inner.register(tmColourStrideSoon(body, links, true));
+    this.watchZoom(body, inner);
     tmDrawMermaid(this.text(), body, { app: this.plugin.app, sourcePath: this.sourcePath, component: inner });
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
     tmFindingsInto(this.findings, this.shownModel().findings);
