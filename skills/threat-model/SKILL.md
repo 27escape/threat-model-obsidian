@@ -16,7 +16,7 @@ The model you write is a **draft for a person to check**. Never present it as a 
 
 1. **Gather** the system, from a picture (step 1a) or a conversation (step 1b).
 2. **Play it back** in plain English and get the user's corrections before writing anything.
-3. **Write the model**: elements, zones, flows, then a scenario or two.
+3. **Write the model**: elements, zones, flows, then a scenario for each main journey (see *Scenarios*).
 4. **Suggest threats** with STRIDE per element, each rated and marked as a suggestion.
 5. **Check** the model against the list in *Checking your model*.
 6. **Deliver** it as a `.threat` file or a `threat` code block, with a short summary of what you assumed.
@@ -32,6 +32,8 @@ A whiteboard photo, a Visio or draw.io export, a hand sketch or a screenshot. Re
 - **Boundaries**: dashed or coloured areas, "VPC", "DMZ", "Internet", "on-prem". These become zones.
 - **Groupings**: a box drawn around other boxes is a system or container they are part of.
 - **Technology**: logos and words such as React, PostgreSQL, Kafka, S3, Auth0.
+- **Order**: numbered arrows (1, 2, 3…), or a sequence diagram beside the picture, give the order of a journey:
+  write it as a scenario.
 
 Then **list what you could not read or are unsure of** and ask about it, a few questions at a time. Common gaps:
 
@@ -54,7 +56,8 @@ Interview the user, one topic at a time, in this order. Stop early if they've al
 4. Where each part runs: the internet, a DMZ, a cloud account, an office network. These are the zones.
 5. What talks to what, in which direction, over what protocol, carrying what data.
 6. What data is sensitive, and where it is stored.
-7. One or two important journeys (signing in, placing an order) to draw as scenarios.
+7. The important journeys (signing in, placing an order, a nightly export, an administrator's change), step by step.
+   These become scenarios. If the user doesn't name any, propose the obvious ones from the flows and ask.
 8. Anything already known to be a worry, and controls already in place (MFA, WAF, encryption at rest).
 
 ### 2. Play it back
@@ -109,7 +112,19 @@ the public or a third party controls, and something like `"restricted"` or `"tru
 An untrusted zone gets a warning shield on the Data flow view, and stores written straight from it are flagged.
 
 Put an element in a zone by nesting it inside the zone's block, or with `zone = id` on the element (needed when the
-element is nested in a system). An element without a zone takes its parent's. Zones can nest.
+element is nested in a system). An element without a zone takes its parent's.
+
+Zones can nest: use that for a boundary inside a boundary, such as two regions or VPCs inside one cloud account, or
+network segments inside a data centre. A flow between two zones inside the same outer zone is still a crossing, but
+its findings are a step less serious than a flow going out of the outer zone, so nesting the zones as they really
+are makes the ratings right:
+
+```threat-source
+zone aws "AWS (private)" { trust = "restricted"
+  zone west1 "us-west-1" { store db1 "Orders" }
+  zone west2 "us-west-2" { store db2 "Orders replica" }
+}
+```
 
 ### Flows
 
@@ -162,8 +177,21 @@ scenario login "Customer signs in" {
 }
 ```
 
-Each step must match a flow already written (add the label when two flows join the same elements). Write one
-scenario for each important journey the user mentions, in the order things happen.
+Each step must match a flow already written (add the label when two flows join the same elements), in the order
+things happen.
+
+Scenarios are worth writing even for a small model: the plugin's scenario list shows one scenario at a time on
+**every** view, cutting the Structure and Data flow diagrams down to that journey's flows and the parts they touch,
+with its threats. So a model with its journeys as scenarios is much easier to read and review than one big diagram.
+
+- Write one scenario for each journey the user describes or the picture numbers.
+- If they describe none, add the obvious ones the flows already show, usually two to four: the main thing users do
+  (sign in, place an order), anything with sensitive data (payments, personal data leaving the system), and
+  background or administrative paths (replication, batch jobs, an operator's access). Mark these
+  `// (suggested scenario)` on the line before, and say so when you deliver.
+- Aim for most flows to be in at least one scenario; a flow in none is worth a question ("when does this happen?").
+- Give each a short, plain title, as a user would say it: "Customer places an order", not "Order flow".
+- Don't set the model's `scenario` attribute unless the user asks: the views open on all scenarios.
 
 ### Icons
 
@@ -212,6 +240,7 @@ The plugin shows errors with line numbers when the model is opened, but check be
 - [ ] Every threat has an ID, at least one STRIDE tag and exactly one rating.
 - [ ] Strings are closed, and no `"…"` string contains a `"`.
 - [ ] Sensitive data is tagged, and flows crossing zones have a `protocol` or `encrypted`.
+- [ ] There is a scenario for each main journey, each step matching a flow, and suggested ones are marked.
 
 ## Delivering
 
@@ -226,7 +255,8 @@ The plugin shows errors with line numbers when the model is opened, but check be
 
 - Set `status = "draft"` and fill in `scope`, `out_of_scope` and `assumptions` from what you learnt.
 - After the model, tell the user in a few lines: what you couldn't read or had to guess, the threats you think matter
-  most, and controls worth considering. Suggest they open the Data flow view first and use *Report* when it's ready.
+  most, the scenarios you added (and which you suggested), and controls worth considering. Suggest they open the
+  Data flow view first, try each scenario from the scenario list, and use *Report* when it's ready.
 - Write in British English.
 
 ## Example
