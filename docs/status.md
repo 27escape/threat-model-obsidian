@@ -74,6 +74,12 @@ chat; update it when something here changes.
 
 ## Ideas to consider
 
+- **Icon suggestions in the editor's Icon field** (asked 25 November 2026, for later): as you type, a list of
+  matching Lucide icons, each drawn beside its name, the technology's default icon first. Obsidian: an
+  `AbstractInputSuggest` on the field (already used by the settings), names from `getIconIds()`, drawn with
+  `setIcon`. Web app: the same list from the bundled `TW_LUCIDE` names (and old names), in a small dropdown under the
+  field (a `<datalist>` can't show the icons). One shared suggestion function, two small hosts; a few hours with tests.
+
 Not agreed; each wants a conversation before any work.
 
 1. **A compact sequence diagram in saved reports,** for long scenarios (Internet banking's is long).
