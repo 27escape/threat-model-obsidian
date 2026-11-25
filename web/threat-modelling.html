@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="description" content="Write a threat model as text and see it as C4, sequence and data-flow diagrams, with STRIDE threats coloured by risk. Everything stays in your browser.">
 <title>Threat Modelling</title>
-<!-- Threat Modelling 0.3.0, web app. Built from the plugin's source by tools/build-web.mjs. Pele 1.13.0 (MIT), Lucide (ISC). -->
+<!-- Threat Modelling 0.3.1, web app. Built from the plugin's source by tools/build-web.mjs. Pele 1.13.0 (MIT), Lucide (ISC). -->
 <style>
 /* @src src/web/theme.css */
 /* The web app's stand-in for Obsidian's theme: the CSS variables the plugin's styles use, with values close to
@@ -245,6 +245,35 @@ button.is-active {
 .tm-body .mermaid svg {
   max-width: 100%;
   height: auto;
+}
+
+/* the zoom buttons above a diagram (diagram-zoom.js), at its right */
+.tm-zoom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+.tm-zoom .tm-btn {
+  padding: 2px 6px;
+}
+.tm-zoom .svg-icon {
+  width: 14px;
+  height: 14px;
+}
+/* a zoomed diagram fills the box it is given; the box can be wider than the block, which then scrolls */
+.tm-body .mermaid.tm-zoomed {
+  max-width: none;
+  margin: 0 auto;
+}
+.tm-body .mermaid.tm-zoomed svg {
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+}
+.tm-zoom-label {
+  min-width: 3.6em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Report opens a note in a new tab rather than switching the view: last in the bar, set apart, with an arrow */
@@ -1888,6 +1917,7 @@ const MarkdownRenderer = {
     const host = el.createDiv({ cls: 'mermaid' });
     try {
       const mounted = pele.mount(host, m[1], {
+        controls: false, // the block has its own zoom buttons (diagram-zoom.js)
         onError: (e) => {
           host.empty();
           host.createDiv({ cls: 'tm-errors', text: `The diagram couldn't be drawn: ${e && e.message ? e.message : e}` });
@@ -5316,6 +5346,7 @@ class TmBlock extends MarkdownRenderChild {
       overlay: was.overlay !== undefined ? was.overlay : true, // threats on the Structure view
       compact: was.compact !== undefined ? was.compact : false, // short labels, the detail in the table
       zones: was.zones !== undefined ? was.zones : true, // zones on the Structure view
+      zoom: was.zoom !== undefined ? was.zoom : null, // the diagram's zoom: null (as drawn), 'fit' or a number (diagram-zoom.js)
     };
     if (this.state.scenario && !this.model.scenarios.some((x) => x.id === this.state.scenario)) this.state.scenario = '';
 
@@ -5345,6 +5376,7 @@ class TmBlock extends MarkdownRenderChild {
     const report = this.bar.createEl('button', { cls: 'tm-btn tm-report-btn', text: TM_VIEW_NAMES.report });
     report.setAttr('aria-label', 'Open the report as a note in a new tab, ready to print or export to PDF');
     this.registerDomEvent(report, 'click', () => tmSaveReportNote(this.plugin, this.model, this.warnings, this.sourcePath));
+    this.zoomBar(el);
     this.body = el.createDiv({ cls: 'tm-body' });
     this.table = el.createDiv({ cls: 'tm-table' });
     this.findings = el.createDiv({ cls: 'tm-findings-box' });
@@ -5382,8 +5414,9 @@ class TmBlock extends MarkdownRenderChild {
 
   choose(change) {
     Object.assign(this.state, change);
-    const { view, level, scenario, overlay, compact, zones } = this.state;
-    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact, zones });
+    const { view, level, scenario, overlay, compact, zones, zoom } = this.state;
+    this.plugin.blockState.set(this.state.key, { view, level, scenario, overlay, compact, zones, zoom });
+    if (Object.keys(change).length === 1 && 'zoom' in change) return this.applyZoomNow(); // the same picture, sized again
     this.draw();
   }
 
@@ -5424,6 +5457,7 @@ class TmBlock extends MarkdownRenderChild {
       clear: () => tmShowFootprint(body, null),
     };
     inner.register(tmColourStrideSoon(body, links, true));
+    this.watchZoom(body, inner);
     tmDrawMermaid(this.text(), body, { app: this.plugin.app, sourcePath: this.sourcePath, component: inner });
     tmThreatTableInto(this.table, view === 'structure' && !overlay ? [] : tmViewThreats(this.model, view, { scenario }), this.model);
     tmFindingsInto(this.findings, this.shownModel().findings);
@@ -5472,6 +5506,99 @@ class TmBlock extends MarkdownRenderChild {
     for (const e of this.errors) ul.createEl('li', { text: `Line ${e.line}: ${e.message}` });
   }
 }
+/* @src src/diagram-zoom.js */
+// Zoom for a threat block's diagram: buttons above it to zoom out, fit the diagram to the space it has (its width,
+// and the height of the pane, for a long diagram) and zoom in, with the zoom shown between them (click it to go back
+// to the diagram's own size). The choice is kept for the block, like its view, and applied each time the diagram is
+// drawn: Obsidian draws it a moment later, so a watcher waits for the picture.
+
+const TM_ZOOM_STEP = 1.25;
+const TM_ZOOM_MIN = 0.1;
+const TM_ZOOM_MAX = 4;
+
+Object.assign(TmBlock.prototype, {
+  /** The zoom buttons, in `parent`. */
+  zoomBar(parent) {
+    const bar = parent.createDiv({ cls: 'tm-zoom' });
+    const button = (icon, text, tip, run) => {
+      const b = bar.createEl('button', { cls: 'tm-btn tm-small tm-zoom-btn' });
+      const svg = getIcon(icon);
+      if (svg) b.appendChild(svg);
+      else b.setText(text);
+      b.setAttr('aria-label', tip);
+      this.registerDomEvent(b, 'click', run);
+      return b;
+    };
+    button('zoom-out', '−', 'Zoom out', () => this.zoomBy(1 / TM_ZOOM_STEP));
+    this.zoomLabel = bar.createEl('button', { cls: 'tm-btn tm-small tm-zoom-label' });
+    this.zoomLabel.setAttr('aria-label', 'Show the diagram at its own size');
+    this.registerDomEvent(this.zoomLabel, 'click', () => this.choose({ zoom: null }));
+    button('zoom-in', '+', 'Zoom in', () => this.zoomBy(TM_ZOOM_STEP));
+    button('scan', 'Fit', 'Fit the whole diagram in view', () => this.choose({ zoom: 'fit' }));
+    return bar;
+  },
+
+  /** Zoom in or out from what is shown now. */
+  zoomBy(factor) {
+    const svg = this.body && this.body.querySelector('.mermaid svg');
+    const now = svg ? this.zoomNow(svg) : 1;
+    this.choose({ zoom: Math.min(TM_ZOOM_MAX, Math.max(TM_ZOOM_MIN, Math.round(now * factor * 100) / 100)) });
+  },
+
+  /** The zoom the diagram is shown at: its drawn width against its own. */
+  zoomNow(svg) {
+    const own = parseFloat(svg.getAttribute('width')) || svg.getBoundingClientRect().width || 1;
+    return svg.getBoundingClientRect().width / own || 1;
+  },
+
+  /** The zoom changed: size the picture shown now. */
+  applyZoomNow() {
+    const svg = this.body && this.body.querySelector('.mermaid svg');
+    if (svg) this.applyZoom(svg);
+  },
+
+  /** Apply the chosen zoom to the diagram, once it is drawn (and again whenever it is drawn afresh). */
+  watchZoom(body, component) {
+    const apply = () => {
+      const svg = body.querySelector('.mermaid svg');
+      if (!svg || svg.getAttribute('data-tm-zoom') === String(this.state.zoom)) return;
+      this.applyZoom(svg);
+    };
+    const watch = new MutationObserver(apply);
+    watch.observe(body, { childList: true, subtree: true });
+    component.register(() => watch.disconnect());
+    apply();
+  },
+
+  /**
+   * Size the picture: the box around it (its .mermaid) gets the width, and the picture fills that box (styles.css),
+   * as a renderer may draw the picture again (Pele does when its box changes size) and would lose a size set on it.
+   */
+  applyZoom(svg) {
+    const zoom = this.state.zoom;
+    const box = svg.parentElement;
+    svg.setAttribute('data-tm-zoom', String(zoom));
+    const w = parseFloat(svg.getAttribute('width'));
+    const h = parseFloat(svg.getAttribute('height'));
+    if (!zoom || !w || !h) {
+      // as drawn: its own size, or narrower to fit the width
+      box.removeClass('tm-zoomed');
+      box.style.removeProperty('width');
+    } else {
+      let z = zoom;
+      if (zoom === 'fit') {
+        const room = this.body.clientWidth || w;
+        // the height of the pane the note is in, less a little for the bar above the diagram
+        const pane = this.body.closest('.markdown-preview-view, .cm-scroller, .view-content, .tw-view');
+        const tall = Math.max(200, (pane ? pane.clientHeight : window.innerHeight) - 100);
+        z = Math.min(room / w, tall / h);
+      }
+      box.addClass('tm-zoomed');
+      box.style.setProperty('width', `${Math.round(w * z)}px`);
+    }
+    if (this.zoomLabel) this.zoomLabel.setText(`${Math.round(this.zoomNow(svg) * 100)}%`);
+  },
+});
 /* @src src/legend.js */
 // The key under a diagram: what the C4 colours and shapes mean (Structure), what the STRIDE letters' colours mean, and how
 // risk is shown (louder words and threat IDs, and in the Structure and Data flow views coloured boxes and arrows).
