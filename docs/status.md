@@ -3,6 +3,15 @@
 Where Threat Modelling stands, what is decided, and what might come next. Read this before starting work in a new
 chat; update it when something here changes.
 
+## Before the next release
+
+- **Check the workflows' first runs on Node 24** (commit 354a053: checkout v7, setup-node v7 building with Node 24,
+  configure-pages v6, upload-pages-artifact v5, deploy-pages v5, attest-build-provenance v4). After
+  `tools/release.sh`, open GitHub's Actions tab: the *Release* run must draft the release with all four files
+  (`main.js`, `manifest.json`, `styles.css`, `threat-modelling.html`), and the *Web app* run must deploy, with no
+  "Node.js 20 is deprecated" warning. If either fails, the previous versions are in the commit before 354a053.
+- The `github-pages` environment allows tags `*.*.*` (set on 25 November 2026 for 0.3.1); keep that rule.
+
 ## Released
 
 - **Published on GitHub** (27escape/threat-model-obsidian): 0.1.0, 0.2.0, 0.2.1, 0.2.2 and 0.2.3. 0.2.0 dropped the `.flow` kind
