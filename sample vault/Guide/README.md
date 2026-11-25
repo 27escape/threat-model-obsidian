@@ -9,6 +9,8 @@ An Obsidian plugin for writing threat models in your notes. You describe a syste
 It works on desktop and mobile, and it is completely local: diagrams are drawn by Obsidian's own Mermaid renderer, [Pele](https://pele.run/), so it needs Obsidian 1.15 or later.
 
 > [!NOTE]
+> **0.3.2:** a *Tools* menu on each diagram (Edit, Report, and the web app's exports: .threat file or code block, share link, SVG, PNG and CSV), icon suggestions as you type, and a calmer bar with the zoom buttons floating over the diagram. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.3.2.md).
+>
 > **0.3.1:** scenarios on every view (a scenario list before the view list), zoom buttons on the diagrams, nested zones rated as they really are, and the web app as a page to download with each release. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.3.1.md).
 >
 > **0.3.0:** change a model by clicking its diagram, in Obsidian too: an *Edit* switch on each diagram opens the Threat model editor in the right sidebar, with undo; zones on the Structure view; a flow can go to a new element; *Open in the web editor*. See [the release notes](https://github.com/27escape/threat-model-obsidian/blob/main/docs/release-notes/0.3.0.md).
