@@ -96,8 +96,9 @@ if [ "$HAS_MAIN" = 1 ] && [ "$BRANCH" != main ]; then
 fi
 echo "   release notes: $NOTES"
 echo "   unit tests…"
-node --test test/*.test.mjs >"$TMP/$ID-release-tests.txt" 2>&1 || { grep -E '^not ok|^# (pass|fail)' "$TMP/$ID-release-tests.txt"; fail "unit tests failed (all output: $TMP/$ID-release-tests.txt)"; }
-grep -E '^# (pass|fail)' "$TMP/$ID-release-tests.txt" | sed 's/^/   /'
+# the TAP reporter on every Node version (newer ones default to "spec", whose lines the greps below don't match)
+node --test --test-reporter=tap test/*.test.mjs >"$TMP/$ID-release-tests.txt" 2>&1 || { grep -E '^not ok|^# (pass|fail)' "$TMP/$ID-release-tests.txt"; fail "unit tests failed (all output: $TMP/$ID-release-tests.txt)"; }
+grep -E '^# (pass|fail)' "$TMP/$ID-release-tests.txt" | sed 's/^/   /' || true
 
 # ---- 2. the version
 if [ "$CURRENT" != "$VERSION" ]; then
