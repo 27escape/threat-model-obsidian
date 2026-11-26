@@ -9,7 +9,7 @@ How the stride-plantuml parts are written here:
 - The original drew two "Uses" arrows from the single-page application to the sign-in controller; they are one flow here.
 - **Trust to value ratio** (`$TrustValueRatio("2:5")`) has nothing to match it yet.
 
-Choose **Component** in the level list to see inside the API application, as the original does.
+Choose **Component** in the level list to see inside the API application, as the original does. The scenario list (before the view list) shows one client at a time: *Web banking* (the single-page application) or *Mobile banking* (the mobile app), on every view.
 
 ```threat
 title = "Internet banking"
@@ -109,4 +109,23 @@ control C2 "Signed requests to the mainframe" {
 control C3 "App attestation for the mobile app" { covers = R2 }
 control C4 "Strict CORS and CSRF protection for the web app" #verified { covers = R2 }
 control C5 "Rate limits at the API" #implemented { covers = [R2, T2] }
+
+// one journey per client: sign in, then see the accounts
+scenario web "Web banking" {
+  spa -> sign
+  sign -> security
+  security -> db
+  spa -> accounts
+  accounts -> mbsfacade
+  mbsfacade -> mbs
+}
+
+scenario mobile "Mobile banking" {
+  ma -> sign
+  sign -> security
+  security -> db
+  ma -> accounts
+  accounts -> mbsfacade
+  mbsfacade -> mbs
+}
 ```
