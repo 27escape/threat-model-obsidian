@@ -5,12 +5,10 @@ chat; update it when something here changes.
 
 ## Before the next release
 
-- **Check the workflows' first runs on Node 24** (commit 354a053: checkout v7, setup-node v7 building with Node 24,
-  configure-pages v6, upload-pages-artifact v5, deploy-pages v5, attest-build-provenance v4). After
-  `tools/release.sh`, open GitHub's Actions tab: the *Release* run must draft the release with all four files
-  (`main.js`, `manifest.json`, `styles.css`, `threat-modelling.html`), and the *Web app* run must deploy, with no
-  "Node.js 20 is deprecated" warning. If either fails, the previous versions are in the commit before 354a053.
 - The `github-pages` environment allows tags `*.*.*` (set on 25 November 2026 for 0.3.1); keep that rule.
+- If a *Release* run sits in *Queued* and can't be cancelled (a GitHub fault), leave it and push the tag again:
+  `git push origin :refs/tags/X.Y.Z && git push origin X.Y.Z`. Rerunning `tools/release.sh` alone doesn't start
+  the workflow again once the tag is on GitHub.
 
 ## Released
 
@@ -23,7 +21,8 @@ chat; update it when something here changes.
 - **0.2.2** (`docs/release-notes/0.2.2.md`): the AI skill (`skills/threat-model/`, idea 11), the web app (idea 12,
   first stage, live on GitHub Pages: `.github/workflows/pages.yml` publishes it for each release tag), the starter
   model without warnings, and icon names that survive Lucide's renames.
-- **0.3.1, ready to release** (`docs/release-notes/0.3.1.md`): scenarios on every view, zoom buttons, nested-zone ratings, the web app page attached to releases and in `web/`, and the skill writing scenarios. Release with `tools/release.sh 0.3.1` (push from WSL first).
+- **0.3.2 (released 26 November 2026, and in the community list)** (`docs/release-notes/0.3.2.md`): the *Tools* menu (Edit, Report and the web app's exports), icon suggestions, a calmer bar with floating zoom buttons. First release with the workflows on Node 24.
+- **0.3.1 (released)** (`docs/release-notes/0.3.1.md`): scenarios on every view, zoom buttons, nested-zone ratings, the web app page attached to releases and in `web/`, and the skill writing scenarios.
 - **0.3.0 (released)** (`docs/release-notes/0.3.0.md`): editing from the diagram in Obsidian (the *Edit* switch and the Threat model editor in the right sidebar, with Add and Model menus, undo and redo, problems, *Show in text*, *Open in the web editor*); zones on the Structure view; a flow to a new element; deleting a box takes its flows.
 - **0.2.3 (released):** point and click for elements, zones, flows
   and controls; then adding elements, flows and scenarios from forms (*Add*, *Model*), undo and redo, line numbers
